@@ -5,3 +5,4 @@
 publish/
 lcov.info
 coverage.json
+aws-lambda-tools-defaults.json
