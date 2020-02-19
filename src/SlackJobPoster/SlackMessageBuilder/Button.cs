@@ -16,10 +16,8 @@ namespace SlackJobPoster.SlackMessageBuilder
         public Text Text { get; set; }
         [JsonProperty("style", NullValueHandling = NullValueHandling.Ignore)]
         public string Style { get; set; }
-        public Button(string actionId, string text, ButtonStyle style = ButtonStyle.DEFAULT)
+        public Button(string actionId, string text, ButtonStyle style = ButtonStyle.DEFAULT) : base("button", actionId)
         {
-            Type = "button";
-            ActionId = actionId;
             Text = new Text(text);
             Style = GetStyleFromEnum(style);
         }

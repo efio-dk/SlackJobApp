@@ -7,22 +7,26 @@ namespace SlackJobPoster.SlackMessageBuilder
     public class SlackMsgBuilder
     {
         [JsonProperty("blocks")]
-        public List<Block> Blocks;
+        private List<Block> _blocks;
 
         public SlackMsgBuilder()
         {
-            Blocks = new List<Block>();
+            _blocks = new List<Block>();
         }
 
         public void AddBlock(Block block)
         {
-            Blocks.Add(block);
+            _blocks.Add(block);
         }
-
+        public int GetBlocksCount()
+        {
+            return _blocks.Count;
+        }
         public JObject GetJObject()
         {
+            if (_blocks.Count <= 0)
+                throw new JsonException("Empty Slack message");
             JObject jsonObj = JObject.FromObject(this);
-
             return jsonObj;
         }
     }

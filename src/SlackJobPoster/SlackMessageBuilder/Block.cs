@@ -5,6 +5,10 @@ namespace SlackJobPoster.SlackMessageBuilder
     public abstract class Block
     {
         [JsonProperty("type")]
-        public string Type { get; set; }
+        private string _type;
+        public Block(string type)
+        {
+            _type = type;
+        }
     }
 }

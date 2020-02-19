@@ -72,13 +72,20 @@ namespace SlackJobPoster
             builder.AddBlock(new Section(new Text("*" + header + "*" + Environment.NewLine + sourceId, "mrkdwn")));
             builder.AddBlock(new Divider());
             builder.AddBlock(new SlackAction("actions")
-                            .AddElement(new StaticSelect("customer_select", "Customer")
-                                    .AddOption(new Option("DSB", "DSB"))
-                                    .AddOption(new Option("Efio", "Efio")))
+                            .AddElement(new StaticSelect("customer_select", GetListOfCustomers(), "Customer"))
                             .AddElement(new Button("addToClose_btn", "Add to Close", ButtonStyle.PRIMARY))
                             .AddElement(new Button("qualifyLead_btn", "Qualify Lead")));
 
             return builder.GetJObject();
+        }
+
+        private List<Option> GetListOfCustomers()
+        {
+            List<Option> customers = new List<Option>();
+            customers.Add(new Option("DSB", "DSB"));
+            customers.Add(new Option("Efio", "Efio"));
+
+            return customers;
         }
     }
 }

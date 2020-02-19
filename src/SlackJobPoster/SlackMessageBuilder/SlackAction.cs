@@ -6,19 +6,18 @@ namespace SlackJobPoster.SlackMessageBuilder
     public class SlackAction : Block
     {
         [JsonProperty("block_id")]
-        public string BlockId;
+        private string _blockId;
         [JsonProperty("elements")]
-        public List<Element> Elements;
-        public SlackAction(string blockId)
+        private List<Element> _elements;
+        public SlackAction(string blockId) : base("actions")
         {
-            Type = "actions";
-            Elements = new List<Element>();
-            BlockId = blockId;
+            _elements = new List<Element>();
+            _blockId = blockId;
         }
 
         public SlackAction AddElement(Element element)
         {
-            Elements.Add(element);
+            _elements.Add(element);
             return this;
         }
     }

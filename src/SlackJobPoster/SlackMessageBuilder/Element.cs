@@ -5,8 +5,14 @@ namespace SlackJobPoster.SlackMessageBuilder
     public abstract class Element
     {
         [JsonProperty("type")]
-        public string Type { get; set; }
+        private string _type;
         [JsonProperty("action_id")]
-        public string ActionId { get; set; }
+        private string _actionId;
+
+        public Element(string type, string actionId)
+        {
+            _type = type;
+            _actionId = actionId;
+        }
     }
 }

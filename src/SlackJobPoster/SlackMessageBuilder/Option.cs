@@ -5,14 +5,14 @@ namespace SlackJobPoster.SlackMessageBuilder
     public class Option
     {
         [JsonProperty("text")]
-        public Text Text { get; set; }
+        private Text _text;
         [JsonProperty("value")]
-        public string Value { get; set; }
+        private string _value;
 
         public Option(string text, string value)
         {
-            Text = new Text(text);
-            Value = value;
+            _text = new Text(text);
+            _value = value;
         }
     }
 }

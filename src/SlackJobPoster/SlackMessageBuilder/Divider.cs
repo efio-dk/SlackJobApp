@@ -2,9 +2,6 @@ namespace SlackJobPoster.SlackMessageBuilder
 {
     public class Divider : Block
     {
-        public Divider()
-        {
-            Type = "divider";
-        }
+        public Divider() : base("divider") {}
     }
 }

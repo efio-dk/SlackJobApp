@@ -5,15 +5,15 @@ namespace SlackJobPoster.SlackMessageBuilder
     public class Text
     {
         [JsonProperty("type")]
-        public string Type; 
+        private string _type; 
 
         [JsonProperty("text")]
-        public string Txt;
+        private string _txt;
 
         public Text(string text, string type = "plain_text")
         {
-            Txt = text;
-            Type = type;
+            _txt = text;
+            _type = type;
         }
     }
 }

@@ -6,28 +6,20 @@ namespace SlackJobPoster.SlackMessageBuilder
     public class StaticSelect : Element
     {
         [JsonProperty("placeholder")]
-        public Text Placeholder { get; set; }
+        private Text _placeholder;
         [JsonProperty("options")]
-        public List<Option> Options { get; set; }
-        public StaticSelect(string actionId, string placeholder = null)
+        private List<Option> _options;
+        public StaticSelect(string actionId, List<Option> options, string placeholder = null) : base("static_select", actionId)
         {
             if(!(placeholder is null))
-                Placeholder = new Text(placeholder);
+                _placeholder = new Text(placeholder);
 
-            Type = "static_select";
-            ActionId = actionId;
-            Options = new List<Option>();
-        }
-
-        public StaticSelect AddOption(Option option)
-        {
-            Options.Add(option);
-            return this;
+            _options = options;
         }
 
         public StaticSelect AddPlaceholder(string placeholder)
         {
-            Placeholder = new Text(placeholder);
+            _placeholder = new Text(placeholder);
             return this;
         }
     }

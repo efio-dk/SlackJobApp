@@ -5,11 +5,10 @@ namespace SlackJobPoster.SlackMessageBuilder
     public class Section : Block
     {
         [JsonProperty("text")]
-        public Text Text;
-        public Section(Text text)
+        private Text _text;
+        public Section(Text text) : base("section")
         {
-            Type = "section";
-            Text = text;
+            _text = text;
         }
     }
 }
