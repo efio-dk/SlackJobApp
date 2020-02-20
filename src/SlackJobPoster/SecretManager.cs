@@ -14,11 +14,14 @@ namespace SlackJobPoster
         {
             string secret = "";
 
+                context.Logger.LogLine("Setup client");
             IAmazonSecretsManager client = new AmazonSecretsManagerClient(RegionEndpoint.EUWest1);
 
+                context.Logger.LogLine("Setup request");
             GetSecretValueRequest request = new GetSecretValueRequest();
             request.SecretId = secretName;
 
+                context.Logger.LogLine("Setup response");
             GetSecretValueResponse response = null;
 
             // In this sample we only handle the specific exceptions for the 'GetSecretValue' API.
@@ -27,6 +30,7 @@ namespace SlackJobPoster
 
             try
             {
+                context.Logger.LogLine("Will start waiting for a secret");
                 response = await client.GetSecretValueAsync(request);
                 context.Logger.LogLine("Did not get an error");
             }
