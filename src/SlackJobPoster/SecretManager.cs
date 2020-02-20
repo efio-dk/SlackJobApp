@@ -5,6 +5,7 @@ using Amazon;
 using Amazon.Lambda.Core;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
+using Newtonsoft.Json.Linq;
 
 namespace SlackJobPoster
 {
@@ -38,7 +39,14 @@ namespace SlackJobPoster
                 Console.WriteLine("The request had invalid params: " + e.Message);
             }
 
-            return response?.SecretString;
+            string secretValue = "";
+            if(!(response.SecretString is null))
+            {
+                JObject secret = JObject.Parse(secretValue);
+                secretValue = secret.Value<string>(secretName);
+            }
+
+            return secretValue;
         }
     }
 }
