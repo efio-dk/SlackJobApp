@@ -10,7 +10,7 @@ namespace SlackJobPoster
 {
     public static class SecretManager
     {
-        public static async Task<string> GetSecret(string secretName, ILambdaContext context)
+        public static string GetSecret(string secretName, ILambdaContext context)
         {
             string secret = "";
 
@@ -31,7 +31,7 @@ namespace SlackJobPoster
             try
             {
                 context.Logger.LogLine("Will start waiting for a secret");
-                response = await client.GetSecretValueAsync(request);
+                response = client.GetSecretValueAsync(request).Result;
                 context.Logger.LogLine("Did not get an error");
             }
             catch (Exception e)

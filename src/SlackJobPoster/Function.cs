@@ -38,7 +38,7 @@ namespace SlackJobPoster
         private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context)
         {
             context.Logger.LogLine("BEFORE SECRET");
-            webhook_url = await SecretManager.GetSecret("SLACK_WEBHOOK",context);
+            webhook_url = SecretManager.GetSecret("SLACK_WEBHOOK",context);
             context.Logger.LogLine("SECRET IS: " + webhook_url);
 
             JObject jobPost = JObject.Parse(message.Body);
