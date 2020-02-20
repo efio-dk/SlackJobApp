@@ -1,7 +1,3 @@
-variable "SLACK_WEBHOOK" {
-  type = string
-}
-
 # Region
 provider "aws" {
   region = "eu-west-1"
@@ -21,12 +17,6 @@ resource "aws_lambda_function" "prod-SlackJobPoster-lambda" {
   filename         = "../../src/SlackJobPoster/bin/Release/netcoreapp2.1/SlackJobPoster.zip"
   source_code_hash = filebase64sha256("../../src/SlackJobPoster/bin/Release/netcoreapp2.1/SlackJobPoster.zip")
   timeout          = 10
-
-  environment {
-    variables = {
-      SLACK_WEBHOOK = var.SLACK_WEBHOOK
-    }
-  }
 
   tags = {
     Name        = "prod-SlackJobPoster"

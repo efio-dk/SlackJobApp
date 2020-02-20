@@ -77,9 +77,6 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/amazonlinux2-x86_64-standard:1.0
-        EnvironmentVariables:
-        - Name: TF_VAR_SLACK_WEBHOOK
-          Value: redacted
       Name: !Sub '${AWS::StackName}-Staging'
       QueuedTimeoutInMinutes: 5
       ServiceRole: !Ref DeploymentPipelinePoCRole
@@ -137,9 +134,6 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/amazonlinux2-x86_64-standard:1.0
-        EnvironmentVariables:
-        - Name: TF_VAR_SLACK_WEBHOOK
-          Value: redacted
       Name: !Sub '${AWS::StackName}-Prod'
       QueuedTimeoutInMinutes: 5
       ServiceRole: !Ref DeploymentPipelinePoCRole

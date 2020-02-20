@@ -10,6 +10,8 @@ using Newtonsoft.Json.Linq;
 using SlackJobPoster.SlackMessageBuilder;
 using static SlackJobPoster.SlackMessageBuilder.Button;
 
+using Amazon.SecretsManager;
+using Amazon.SecretsManager.Model;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -19,7 +21,7 @@ namespace SlackJobPoster
     public class Function
     {
         private HttpClient client;
-        private static string url = Environment.GetEnvironmentVariable("SLACK_WEBHOOK");
+        private static string url = SecretManager.GetSecret("SLACK_WEBHOOK");
         public Function()
         {
             client = new HttpClient();
