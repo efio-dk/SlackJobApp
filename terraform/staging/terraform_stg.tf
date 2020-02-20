@@ -25,6 +25,6 @@ resource "aws_lambda_function" "stg-SlackJobPoster-lambda" {
 }
 
 resource "aws_lambda_event_source_mapping" "stg-incoming-sqs" {
-  event_source_arn = aws_sqs_queue.stg-processed-job-post-queue.arn
+  event_source_arn = data.aws_sqs_queue.stg-processed-job-post-queue.arn
   function_name    = aws_lambda_function.stg-SlackJobPoster-lambda.arn
 }
