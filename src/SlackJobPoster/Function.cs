@@ -37,10 +37,8 @@ namespace SlackJobPoster
 
         private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context)
         {
-            context.Logger.LogLine("BEFORE SECRET");
             SecretManager sm = new SecretManager();
             webhook_url = sm.Get("SLACK_WEBHOOK");
-            context.Logger.LogLine("SECRET IS: " + webhook_url);
 
             JObject jobPost = JObject.Parse(message.Body);
             string jobPostHeader = jobPost.Value<string>("header");
