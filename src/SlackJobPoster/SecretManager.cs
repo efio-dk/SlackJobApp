@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Amazon;
+using Amazon.Lambda.Core;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 
@@ -9,14 +10,11 @@ namespace SlackJobPoster
 {
     public static class SecretManager
     {
-        public static async Task<string> GetSecret(string secretName)
+        public static async Task<string> GetSecret(string secretName, ILambdaContext context)
         {
-            string region = "eu-west-1";
             string secret = "";
 
-            MemoryStream memoryStream = new MemoryStream();
-
-            IAmazonSecretsManager client = new AmazonSecretsManagerClient(RegionEndpoint.GetBySystemName(region));
+            IAmazonSecretsManager client = new AmazonSecretsManagerClient(RegionEndpoint.EUWest1);
 
             GetSecretValueRequest request = new GetSecretValueRequest();
             request.SecretId = secretName;
@@ -30,21 +28,17 @@ namespace SlackJobPoster
             try
             {
                 response = await client.GetSecretValueAsync(request);
+                context.Logger.LogLine("Did not get an error");
             }
             catch (Exception e)
             {
-                throw;
+                context.Logger.LogLine("Got an error:");
+                context.Logger.LogLine(e.Message);
             }
 
             if (response.SecretString != null)
             {
                 secret = response.SecretString;
-            }
-            else
-            {
-                memoryStream = response.SecretBinary;
-                StreamReader reader = new StreamReader(memoryStream);
-                secret = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(reader.ReadToEnd()));
             }
 
             return secret;
