@@ -8,44 +8,37 @@ using Amazon.SecretsManager.Model;
 
 namespace SlackJobPoster
 {
-    public static class SecretManager
+    public class SecretManager
     {
-        public static string GetSecret(string secretName, ILambdaContext context)
+        public string Get(string secretName)
         {
-            string secret = "";
+            var config = new AmazonSecretsManagerConfig { RegionEndpoint = RegionEndpoint.EUWest1 };
+            var client = new AmazonSecretsManagerClient(config);
 
-                context.Logger.LogLine("Setup client");
-            IAmazonSecretsManager client = new AmazonSecretsManagerClient(RegionEndpoint.EUWest1);
+            var request = new GetSecretValueRequest
+            {
+                SecretId = secretName
+            };
 
-                context.Logger.LogLine("Setup request");
-            GetSecretValueRequest request = new GetSecretValueRequest();
-            request.SecretId = secretName;
-
-                context.Logger.LogLine("Setup response");
             GetSecretValueResponse response = null;
-
-            // In this sample we only handle the specific exceptions for the 'GetSecretValue' API.
-            // See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-            // We rethrow the exception by default.
-
             try
             {
-                context.Logger.LogLine("Will start waiting for a secret");
-                response = client.GetSecretValueAsync(request).Result;
-                context.Logger.LogLine("Did not get an error");
+                response = Task.Run(async () => await client.GetSecretValueAsync(request)).Result;
             }
-            catch (Exception e)
+            catch (ResourceNotFoundException)
             {
-                context.Logger.LogLine("Got an error:");
-                context.Logger.LogLine(e.Message);
+                Console.WriteLine("The requested secret " + secretName + " was not found");
+            }
+            catch (InvalidRequestException e)
+            {
+                Console.WriteLine("The request was invalid due to: " + e.Message);
+            }
+            catch (InvalidParameterException e)
+            {
+                Console.WriteLine("The request had invalid params: " + e.Message);
             }
 
-            if (response.SecretString != null)
-            {
-                secret = response.SecretString;
-            }
-
-            return secret;
+            return response?.SecretString;
         }
     }
 }
