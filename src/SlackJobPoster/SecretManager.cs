@@ -42,7 +42,7 @@ namespace SlackJobPoster
             string secretValue = "";
             if(!(response.SecretString is null))
             {
-                JObject secret = JObject.Parse(secretValue);
+                JObject secret = JObject.Parse(response.SecretString);
                 secretValue = secret.Value<string>(secretName);
             }
 
