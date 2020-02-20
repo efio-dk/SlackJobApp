@@ -17,6 +17,7 @@ resource "aws_lambda_function" "stg-SlackJobPoster-lambda" {
   filename         = "../../src/SlackJobPoster/bin/Debug/netcoreapp2.1/SlackJobPoster.zip"
   source_code_hash = filebase64sha256("../../src/SlackJobPoster/bin/Debug/netcoreapp2.1/SlackJobPoster.zip")
   timeout          = 10
+  memory_size      = 256
 
   tags = {
     Name        = "stg-SlackJobPoster"
