@@ -15,11 +15,5 @@ namespace SlackJobPoster
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             return httpClient.PostAsync(url, content);
         }
-
-        public static async Task<T> ReadAsJsonAsync<T>(this HttpContent content)
-        {
-            var dataAsString = await content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<T>(dataAsString);
-        }
     }
 }

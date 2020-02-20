@@ -1,196 +1,140 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
-
-using Xunit;
-using Amazon.Lambda.TestUtilities;
-using Amazon.Lambda.SQSEvents;
-
-using SlackJobPoster;
-using SlackJobPoster.SlackMessageBuilder;
-using Newtonsoft.Json;
+using Moq;
+using Moq.Protected;
 using Newtonsoft.Json.Linq;
+using Xunit;
 
 namespace SlackJobPoster.Tests
 {
     public class FunctionTest
     {
-        /*
         [Fact]
-        public async Task TestSQSEventLambdaFunction()
+        public void SlackPayloadTest()
         {
-            var sqsEvent = new SQSEvent
-            {
-                Records = new List<SQSEvent.SQSMessage>
-                {
-                    new SQSEvent.SQSMessage
-                    {
-                        Body = "foobar"
-                    }
-                }
-            };
+            var expectedJson = $@"{{
+                                    ""blocks"": [
+                                        {{
+                                        ""text"": {{
+                                            ""type"": ""plain_text"",
+                                            ""text"": "" ""
+                                        }},
+                                        ""type"": ""section""
+                                        }},
+                                        {{
+                                        ""text"": {{
+                                            ""type"": ""plain_text"",
+                                            ""text"": "" ""
+                                        }},
+                                        ""type"": ""section""
+                                        }},
+                                        {{
+                                        ""text"": {{
+                                            ""type"": ""mrkdwn"",
+                                            ""text"": ""*header*\nhttp://test.com""
+                                        }},
+                                        ""type"": ""section""
+                                        }},
+                                        {{
+                                        ""type"": ""divider""
+                                        }},
+                                        {{
+                                        ""block_id"": ""actions"",
+                                        ""elements"": [
+                                            {{
+                                            ""placeholder"": {{
+                                                    ""type"": ""plain_text"",
+                                                    ""text"": ""Customer""
+                                                }},
+                                            ""options"": [
+                                                {{
+                                                ""text"": {{
+                                                    ""type"": ""plain_text"",
+                                                    ""text"": ""DSB""
+                                                }},
+                                                ""value"": ""DSB""
+                                                }},
+                                                {{
+                                                ""text"": {{
+                                                    ""type"": ""plain_text"",
+                                                    ""text"": ""Efio""
+                                                }},
+                                                ""value"": ""Efio""
+                                                }}
+                                            ],
+                                            ""type"": ""static_select"",
+                                            ""action_id"": ""customer_select""
+                                            }},
+                                            {{
+                                            ""type"": ""button"",
+                                            ""action_id"": ""addToClose_btn"",
+                                            ""text"": {{
+                                                ""type"": ""plain_text"",
+                                                ""text"": ""Add to Close""
+                                            }},
+                                            ""style"": ""primary""
+                                            }},
+                                            {{
+                                            ""type"": ""button"",
+                                            ""action_id"": ""qualifyLead_btn"",
+                                            ""text"": {{
+                                                ""type"": ""plain_text"",
+                                                ""text"": ""Qualify Lead""
+                                            }}
+                                            }}
+                                        ],
+                                        ""type"": ""actions""
+                                        }}
+                                    ]
+                                    }}";
 
-            var logger = new TestLambdaLogger();
-            var context = new TestLambdaContext
-            {
-                Logger = logger
-            };
+            JObject expectedJObject = JObject.Parse(expectedJson);
 
             var function = new Function();
-            await function.FunctionHandler(sqsEvent, context);
+            JObject payload = function.BuildSlackPayload("header", "http://test.com");
 
-            Assert.Contains("Processed message foobar", logger.Buffer.ToString());
-        }*/
-
-        [Fact]
-        public void EmptyBuilderTest()
-        {
-            var builder = new SlackMsgBuilder();
-            Assert.Throws<JsonException>(() => builder.GetJObject());
+            Assert.True(JToken.DeepEquals(expectedJObject, payload));
         }
 
         [Fact]
-        public void AddBlockTest()
+        public async Task AnotherTest()
         {
-            var builder = new SlackMsgBuilder();
-            builder.AddBlock(new Divider());
+            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            handlerMock
+               .Protected()
+               .Setup<Task<HttpResponseMessage>>(
+                  "SendAsync",
+                  ItExpr.IsAny<HttpRequestMessage>(),
+                  ItExpr.IsAny<CancellationToken>()
+               )
+               .ReturnsAsync(new HttpResponseMessage()
+               {
+                   StatusCode = HttpStatusCode.OK
+               })
+               .Verifiable();
 
-            Assert.True(builder.GetBlocksCount() == 1);
-        }
+            var httpClient = new HttpClient(handlerMock.Object)
+            {
+                BaseAddress = new Uri("http://test.com/"),
+            };
 
-        [Fact]
-        public void DividerTest()
-        {
-            var expectedJson = $@"{{
-                                    ""blocks"": [
-                                        {{
-                                            ""type"": ""divider""
-                                        }}
-                                    ]
-                                }}";
-            JObject expectedJObject = JObject.Parse(expectedJson);
 
-            var builder = new SlackMsgBuilder();
-            builder.AddBlock(new Divider());
-            JObject result = builder.GetJObject();
+            var function = new Function();
+            JObject payload = function.BuildSlackPayload("header", "http://test.com");
 
-            Assert.True(JToken.DeepEquals(expectedJObject, result));
-        }
+            var expectedResponse = new HttpResponseMessage();
+            expectedResponse.StatusCode = HttpStatusCode.OK;
 
-        [Fact]
-        public void SectionTest()
-        {
-            var expectedJson = $@"{{
-                                    ""blocks"": [
-                                        {{
-                                            ""type"": ""section"",
-                                            ""text"":
-                                                {{
-                                                    ""type"": ""plain_text"",
-                                                    ""text"": ""test""
-                                                }}
-                                        }}
-                                    ]
-                                }}";
+            var actualResponse = await httpClient.PostAsJsonAsync("", payload);
 
-            JObject expectedJObject = JObject.Parse(expectedJson);
 
-            var builder = new SlackMsgBuilder();
-            builder.AddBlock(new Section(new Text("test")));
-            JObject result = builder.GetJObject();
 
-            Assert.True(JToken.DeepEquals(expectedJObject, result));
+            Assert.Equal(expectedResponse.StatusCode, actualResponse.StatusCode);
 
         }
 
-        [Fact]
-        public void ActionTest()
-        {
-            var expectedJson = $@"{{
-                                    ""blocks"": [
-                                        {{
-                                            ""type"": ""actions"",
-                                            ""block_id"": ""actions"",
-                                            ""elements"": []
-                                        }}
-                                    ]
-                                }}";
-
-            JObject expectedJObject = JObject.Parse(expectedJson);
-
-            var builder = new SlackMsgBuilder();
-            builder.AddBlock(new SlackAction("actions"));
-            JObject result = builder.GetJObject();
-
-            Assert.True(JToken.DeepEquals(expectedJObject, result));
-
-        }
-
-
-        [Fact]
-        public void ActionAddTest()
-        {
-            var expectedJson = $@"{{
-                                    ""blocks"": [
-                                        {{
-                                            ""type"": ""actions"",
-                                            ""block_id"": ""actions"",
-                                            ""elements"": [
-                                                {{
-                                                    ""placeholder"": {{
-                                                        ""type"": ""plain_text"",
-                                                        ""text"": ""Customer""
-                                                    }},
-                                                    ""type"": ""static_select"",
-                                                    ""action_id"": ""customer_select"",
-                                                    ""options"": [
-                                                    {{
-                                                    ""text"": {{
-                                                        ""type"": ""plain_text"",
-                                                        ""text"": ""Efio""
-                                                    }},
-                                                    ""value"": ""Efio""
-                                                    }}
-                                                    ]
-                                                }}
-                                            ]
-                                        }}
-                                    ]
-                                }}";
-
-            JObject expectedJObject = JObject.Parse(expectedJson);
-
-            var builder = new SlackMsgBuilder();
-            List<Option> customers = new List<Option>();
-            customers.Add(new Option("Efio", "Efio"));
-
-            builder.AddBlock(new SlackAction("actions").AddElement(new StaticSelect("customer_select",customers, "Customer")));
-            JObject result = builder.GetJObject();
-
-            Console.WriteLine(expectedJObject.ToString());
-            Console.WriteLine("n\n\n");
-            Console.WriteLine(result.ToString());
-
-            Assert.True(JToken.DeepEquals(expectedJObject, result));
-
-        }
-
-        /* [Fact]
-        public void DividerTest()
-        {
-            var expectedJObject = new JObject();
-            var test = new JObject();
-            test.Add("type", "divider");
-            List<JObject> blocks = new List<JObject>();
-            blocks.Add(test);
-            expectedJObject.Add("blocks", JToken.FromObject(blocks));
-
-            var builder = new SlackMsgBuilder();
-            builder.AddBlock(new Divider());
-            JObject result = builder.GetJObject();
-
-            Assert.Equal(expectedJObject, result);
-        } */
     }
 }

@@ -19,25 +19,12 @@ namespace SlackJobPoster
     public class Function
     {
         private HttpClient client;
-        private static string url = "https://hooks.slack.com/services/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";
-        /// <summary>
-        /// Default constructor. This constructor is used by Lambda to construct the instance. When invoked in a Lambda environment
-        /// the AWS credentials will come from the IAM role associated with the function and the AWS region will be set to the
-        /// region the Lambda function is executed in.
-        /// </summary>
+        private static string url = Environment.GetEnvironmentVariable("SLACK_WEBHOOK");
         public Function()
         {
             client = new HttpClient();
         }
 
-
-        /// <summary>
-        /// This method is called for every Lambda invocation. This method takes in an SQS event object and can be used 
-        /// to respond to SQS messages.
-        /// </summary>
-        /// <param name="evnt"></param>
-        /// <param name="context"></param>
-        /// <returns></returns>
         public async Task FunctionHandler(SQSEvent evnt, ILambdaContext context)
         {
             foreach (var message in evnt.Records)
@@ -54,16 +41,12 @@ namespace SlackJobPoster
 
             JObject jsonObject = BuildSlackPayload(jobPostHeader, jobPostUrl);
 
-            HttpResponseMessage response = await client.PostAsJsonAsync(url, jsonObject);
+            await client.PostAsJsonAsync(url, jsonObject);
 
-            context.Logger.LogLine($"Processed message {message.Body}");
-            context.Logger.LogLine(jsonObject.ToString());
-
-            // TODO: Do interesting work based on the new message
             await Task.CompletedTask;
         }
 
-        private JObject BuildSlackPayload(string header, string sourceId)
+        public JObject BuildSlackPayload(string header, string sourceId)
         {
             SlackMsgBuilder builder = new SlackMsgBuilder();
 

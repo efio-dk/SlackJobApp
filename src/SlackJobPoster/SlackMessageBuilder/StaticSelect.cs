@@ -5,7 +5,7 @@ namespace SlackJobPoster.SlackMessageBuilder
 {
     public class StaticSelect : Element
     {
-        [JsonProperty("placeholder")]
+        [JsonProperty("placeholder", NullValueHandling = NullValueHandling.Ignore)]
         private Text _placeholder;
         [JsonProperty("options")]
         private List<Option> _options;

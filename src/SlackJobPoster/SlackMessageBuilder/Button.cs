@@ -13,13 +13,13 @@ namespace SlackJobPoster.SlackMessageBuilder
         }
 
         [JsonProperty("text")]
-        public Text Text { get; set; }
+        private Text _text;
         [JsonProperty("style", NullValueHandling = NullValueHandling.Ignore)]
-        public string Style { get; set; }
+        private string _style;
         public Button(string actionId, string text, ButtonStyle style = ButtonStyle.DEFAULT) : base("button", actionId)
         {
-            Text = new Text(text);
-            Style = GetStyleFromEnum(style);
+            _text = new Text(text);
+            _style = GetStyleFromEnum(style);
         }
 
         private string GetStyleFromEnum(ButtonStyle style)
