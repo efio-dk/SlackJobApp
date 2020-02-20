@@ -1,3 +1,7 @@
+variable "SLACK_WEBHOOK" {
+  type = string
+}
+
 # Region
 provider "aws" {
   region = "eu-west-1"
