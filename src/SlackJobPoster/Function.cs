@@ -21,7 +21,7 @@ namespace SlackJobPoster
     public class Function
     {
         private HttpClient client;
-        private static string url = SecretManager.GetSecret("SLACK_WEBHOOK");
+        private string webhook_url;
         public Function()
         {
             client = new HttpClient();
@@ -37,13 +37,17 @@ namespace SlackJobPoster
 
         private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context)
         {
+            context.Logger.LogLine("BEFORE SECRET");
+            webhook_url = await SecretManager.GetSecret("SLACK_WEBHOOK");
+            context.Logger.LogLine("SECRET IS: " + webhook_url);
+
             JObject jobPost = JObject.Parse(message.Body);
             string jobPostHeader = jobPost.Value<string>("header");
             string jobPostUrl = jobPost.Value<string>("sourceId");
 
             JObject jsonObject = BuildSlackPayload(jobPostHeader, jobPostUrl);
 
-            await client.PostAsJsonAsync(url, jsonObject);
+            await client.PostAsJsonAsync(webhook_url, jsonObject);
 
             await Task.CompletedTask;
         }

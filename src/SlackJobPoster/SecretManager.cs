@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Amazon;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
@@ -8,7 +9,7 @@ namespace SlackJobPoster
 {
     public static class SecretManager
     {
-        public static string GetSecret(string secretName)
+        public static async Task<string> GetSecret(string secretName)
         {
             string region = "eu-west-1";
             string secret = "";
@@ -28,7 +29,7 @@ namespace SlackJobPoster
 
             try
             {
-                response = client.GetSecretValueAsync(request).Result;
+                response = await client.GetSecretValueAsync(request);
             }
             catch (Exception e)
             {
