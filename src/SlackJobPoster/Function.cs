@@ -59,8 +59,8 @@ namespace SlackJobPoster
             SlackMsgBuilder builder = new SlackMsgBuilder();
             StaticSelect customerSelect = new StaticSelect("customer_select", customers.Values.ToList(), "Customer");
             SlackAction actions = new SlackAction("actions")
-                            .AddElement(customerSelect)
-                            .AddElement(new Button("qualifyLead_btn", "Qualify Lead"));
+                            .AddElement(customerSelect);
+                            
 
             // check if we have detected a customer and if so set it as initial option
             if(!string.IsNullOrEmpty(jobPostCustomer))
@@ -69,6 +69,9 @@ namespace SlackJobPoster
                 if(customers.ContainsKey(jobPostCustomer))
                     customerSelect.AddInitialOption(customers[jobPostCustomer]);
             }
+
+            // adding button in the proper place
+            actions.AddElement(new Button("qualifyLead_btn", "Qualify Lead"));
 
             builder.AddBlock(new Section(new Text(" ")));
             builder.AddBlock(new Section(new Text(" ")));

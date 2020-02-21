@@ -7,7 +7,7 @@ namespace SlackJobPoster.SlackMessageBuilder
     {
         [JsonProperty("placeholder", NullValueHandling = NullValueHandling.Ignore)]
         private Text _placeholder;
-        [JsonProperty("intial_option", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("initial_option", NullValueHandling = NullValueHandling.Ignore)]
         private Option _initialOption;
         [JsonProperty("options")]
         private List<Option> _options;
