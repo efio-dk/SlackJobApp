@@ -60,18 +60,18 @@ namespace SlackJobPoster
             StaticSelect customerSelect = new StaticSelect("customer_select", customers.Values.ToList(), "Customer");
             SlackAction actions = new SlackAction("actions")
                             .AddElement(customerSelect);
-                            
+
 
             // check if we have detected a customer and if so set it as initial option
-            if(!string.IsNullOrEmpty(jobPostCustomer))
+            if (!string.IsNullOrEmpty(jobPostCustomer))
             {
                 actions.AddElement(new Button("addToClose_btn", "Add to Close", ButtonStyle.PRIMARY));
-                if(customers.ContainsKey(jobPostCustomer))
+                if (customers.ContainsKey(jobPostCustomer))
                     customerSelect.AddInitialOption(customers[jobPostCustomer]);
             }
 
             // adding button in the proper place
-            actions.AddElement(new Button("qualifyLead_btn", "Qualify Lead"));
+            actions.AddElement(new Button("qualifyLead_btn", "Qualify Lead", string.IsNullOrEmpty(jobPostCustomer) ? ButtonStyle.PRIMARY : ButtonStyle.DEFAULT));
 
             builder.AddBlock(new Section(new Text(" ")));
             builder.AddBlock(new Section(new Text(" ")));

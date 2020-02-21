@@ -74,7 +74,8 @@ namespace SlackJobPoster.Tests
                                             ""text"": {{
                                                 ""type"": ""plain_text"",
                                                 ""text"": ""Qualify Lead""
-                                            }}
+                                                }},
+                                            ""style"": ""primary""
                                             }}
                                         ],
                                         ""type"": ""actions""
