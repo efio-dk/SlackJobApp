@@ -43,35 +43,47 @@ namespace SlackJobPoster
             JObject jobPost = JObject.Parse(message.Body);
             string jobPostHeader = jobPost.Value<string>("header");
             string jobPostUrl = jobPost.Value<string>("sourceId");
+            string jobPostCustomer = jobPost.Value<string>("customer");
 
-            JObject jsonObject = BuildSlackPayload(jobPostHeader, jobPostUrl);
+            JObject jsonObject = BuildSlackPayload(jobPostHeader, jobPostUrl, jobPostCustomer);
 
             await client.PostAsJsonAsync(webhook_url, jsonObject);
 
             await Task.CompletedTask;
         }
 
-        public JObject BuildSlackPayload(string header, string sourceId)
+        public JObject BuildSlackPayload(string header, string sourceId, string jobPostCustomer)
         {
+            Dictionary<string, Option> customers = GetListOfCustomers();
+
             SlackMsgBuilder builder = new SlackMsgBuilder();
+            StaticSelect customerSelect = new StaticSelect("customer_select", customers.Values.ToList(), "Customer");
+            SlackAction actions = new SlackAction("actions")
+                            .AddElement(customerSelect)
+                            .AddElement(new Button("qualifyLead_btn", "Qualify Lead"));
+
+            // check if we have detected a customer and if so set it as initial option
+            if(!string.IsNullOrEmpty(jobPostCustomer))
+            {
+                actions.AddElement(new Button("addToClose_btn", "Add to Close", ButtonStyle.PRIMARY));
+                if(customers.ContainsKey(jobPostCustomer))
+                    customerSelect.AddInitialOption(customers[jobPostCustomer]);
+            }
 
             builder.AddBlock(new Section(new Text(" ")));
             builder.AddBlock(new Section(new Text(" ")));
             builder.AddBlock(new Section(new Text("*" + header + "*" + Environment.NewLine + sourceId, "mrkdwn")));
             builder.AddBlock(new Divider());
-            builder.AddBlock(new SlackAction("actions")
-                            .AddElement(new StaticSelect("customer_select", GetListOfCustomers(), "Customer"))
-                            .AddElement(new Button("addToClose_btn", "Add to Close", ButtonStyle.PRIMARY))
-                            .AddElement(new Button("qualifyLead_btn", "Qualify Lead")));
+            builder.AddBlock(actions);
 
             return builder.GetJObject();
         }
 
-        private List<Option> GetListOfCustomers()
+        private Dictionary<string, Option> GetListOfCustomers()
         {
-            List<Option> customers = new List<Option>();
-            customers.Add(new Option("DSB", "DSB"));
-            customers.Add(new Option("Efio", "Efio"));
+            Dictionary<string, Option> customers = new Dictionary<string, Option>();
+            customers.Add("DSB", new Option("DSB", "DSB"));
+            customers.Add("Efio", new Option("Efio", "Efio"));
 
             return customers;
         }
