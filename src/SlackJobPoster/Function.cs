@@ -52,7 +52,7 @@ namespace SlackJobPoster
             await Task.CompletedTask;
         }
 
-        public JObject BuildSlackPayload(string header, string sourceId, string jobPostCustomer)
+        public JObject BuildSlackPayload(string header, string sourceId, string jobPostCustomer = null)
         {
             Dictionary<string, Option> customers = GetListOfCustomers();
 
