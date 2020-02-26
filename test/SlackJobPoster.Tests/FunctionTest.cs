@@ -88,6 +88,10 @@ namespace SlackJobPoster.Tests
             var function = new Function();
             JObject payload = function.BuildSlackPayload("header", "http://test.com");
 
+            Console.WriteLine(expectedJObject.ToString());
+            Console.WriteLine("------------------------------");
+            Console.WriteLine(payload.ToString());
+
 
             Assert.True(JToken.DeepEquals(expectedJObject, payload));
         }
@@ -180,6 +184,8 @@ namespace SlackJobPoster.Tests
 
             JObject expectedJObject = JObject.Parse(expectedJson);
 
+            Console.WriteLine(expectedJObject.ToString());
+            Console.WriteLine("------------------------------");
             var function = new Function();
             JObject payload = function.BuildSlackPayload("header", "http://test.com", "DSB");
 
