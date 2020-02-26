@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.SQSEvents;
 using Newtonsoft.Json.Linq;
-using SlackJobPoster.SlackMessageBuilder;
-using static SlackJobPoster.SlackMessageBuilder.Button;
 
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
+using SlackMessageBuilder;
+using static SlackMessageBuilder.Button;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -56,7 +56,7 @@ namespace SlackJobPoster
         {
             Dictionary<string, Option> customers = GetListOfCustomers();
 
-            SlackMsgBuilder builder = new SlackMsgBuilder();
+            BlocksBuilder builder = new BlocksBuilder();
             StaticSelect customerSelect = new StaticSelect("customer_select", customers.Values.ToList(), "Customer");
             SlackAction actions = new SlackAction("actions")
                             .AddElement(customerSelect);
