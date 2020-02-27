@@ -39,9 +39,6 @@ namespace SlackJobPoster.Tests
                                         ""type"": ""section""
                                         }},
                                         {{
-                                        ""type"": ""divider""
-                                        }},
-                                        {{
                                         ""block_id"": ""actions"",
                                         ""elements"": [
                                             {{
@@ -79,6 +76,9 @@ namespace SlackJobPoster.Tests
                                             }}
                                         ],
                                         ""type"": ""actions""
+                                        }},
+                                        {{
+                                        ""type"": ""divider""
                                         }}
                                     ]
                                     }}";
@@ -116,9 +116,6 @@ namespace SlackJobPoster.Tests
                                             ""text"": ""*header*\nhttp://test.com""
                                         }},
                                         ""type"": ""section""
-                                        }},
-                                        {{
-                                        ""type"": ""divider""
                                         }},
                                         {{
                                         ""block_id"": ""actions"",
@@ -173,6 +170,9 @@ namespace SlackJobPoster.Tests
                                             }}
                                         ],
                                         ""type"": ""actions""
+                                        }},
+                                        {{
+                                        ""type"": ""divider""
                                         }}
                                     ]
                                     }}";
