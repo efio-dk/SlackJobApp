@@ -76,8 +76,8 @@ namespace SlackJobPoster
             builder.AddBlock(new Section(new Text(" ")));
             builder.AddBlock(new Section(new Text(" ")));
             builder.AddBlock(new Section(new Text("*" + header + "*" + Environment.NewLine + sourceId, "mrkdwn")));
-            builder.AddBlock(new Divider());
             builder.AddBlock(actions);
+            builder.AddBlock(new Divider());
 
             return builder.GetJObject();
         }
