@@ -85,8 +85,8 @@ namespace SlackJobPoster
         private Dictionary<string, Option> GetListOfCustomers()
         {
             Dictionary<string, Option> customers = new Dictionary<string, Option>();
-            customers.Add("DSB", new Option("DSB", "DSB"));
-            customers.Add("Efio", new Option("Efio", "Efio"));
+            customers.Add("DSB", new Option("DSB", "lead_q9WAvUeMbAj9zBsINtZgzxBTXfMwxixGyYmR9rk0ovP"));
+            customers.Add("Efio", new Option("Efio", "lead_Xb8JdJdPYo7YfJ7oXro1E4IrcG983NLZYABhWTcSiOq"));
 
             return customers;
         }

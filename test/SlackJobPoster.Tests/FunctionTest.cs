@@ -55,14 +55,14 @@ namespace SlackJobPoster.Tests
                                                     ""type"": ""plain_text"",
                                                     ""text"": ""DSB""
                                                 }},
-                                                ""value"": ""DSB""
+                                                ""value"": ""lead_q9WAvUeMbAj9zBsINtZgzxBTXfMwxixGyYmR9rk0ovP""
                                                 }},
                                                 {{
                                                 ""text"": {{
                                                     ""type"": ""plain_text"",
                                                     ""text"": ""Efio""
                                                 }},
-                                                ""value"": ""Efio""
+                                                ""value"": ""lead_Xb8JdJdPYo7YfJ7oXro1E4IrcG983NLZYABhWTcSiOq""
                                                 }}
                                             ],
                                             ""type"": ""static_select"",
@@ -129,7 +129,7 @@ namespace SlackJobPoster.Tests
                                                     ""type"": ""plain_text"",
                                                     ""text"": ""DSB""
                                                 }},
-                                                ""value"": ""DSB""
+                                                ""value"": ""lead_q9WAvUeMbAj9zBsINtZgzxBTXfMwxixGyYmR9rk0ovP""
                                             }},
                                             ""placeholder"": {{
                                                     ""type"": ""plain_text"",
@@ -141,14 +141,14 @@ namespace SlackJobPoster.Tests
                                                     ""type"": ""plain_text"",
                                                     ""text"": ""DSB""
                                                 }},
-                                                ""value"": ""DSB""
+                                                ""value"": ""lead_q9WAvUeMbAj9zBsINtZgzxBTXfMwxixGyYmR9rk0ovP""
                                                 }},
                                                 {{
                                                 ""text"": {{
                                                     ""type"": ""plain_text"",
                                                     ""text"": ""Efio""
                                                 }},
-                                                ""value"": ""Efio""
+                                                ""value"": ""lead_Xb8JdJdPYo7YfJ7oXro1E4IrcG983NLZYABhWTcSiOq""
                                                 }}
                                             ],
                                             ""type"": ""static_select"",
