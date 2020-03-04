@@ -7,3 +7,4 @@ lcov.info
 coverage.json
 aws-lambda-tools-defaults.json
 .terraform/
+.vs/

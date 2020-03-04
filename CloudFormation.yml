@@ -55,8 +55,9 @@ Resources:
                   dotnet: 2.2
               build:
                 commands:
-                  - env | grep codebuild      # displays environment debug information in log
-                  - cd test/SlackJobPoster.Tests 
+                  - cd SlackJobPoster
+                  - dotnet test
+                  - cd ../SlackJobPosterReceiver
                   - dotnet test
           Location: !Ref GitCloneUrl
           ReportBuildStatus: true
@@ -99,17 +100,25 @@ Resources:
                   - cd ..
               pre_build:
                 commands:
-                  - cd src/SlackJobPoster
+                  - cd SlackJobPoster
                   - dotnet restore
+                  - cd ../SlackJobPosterReceiver
+                  - dotnet restore
+                  - cd ..
               build:
                 commands:
-                  - env | grep codebuild      # displays environment debug information in log
+                  - cd SlackJobPoster/src/SlackJobPoster
                   - dotnet lambda package -c Debug -o ./bin/Debug/netcoreapp2.1/SlackJobPoster.zip -f netcoreapp2.1
+                  - cd ../../../SlackJobPosterReceiver/src/SlackJobPosterReceiver
+                  - dotnet lambda package -c Debug -o ./bin/Debug/netcoreapp2.1/SlackJobPosterReceiver.zip -f netcoreapp2.1
+                  - cd ../../../
               post_build:
                 commands:
-                  - cd ../../test/SlackJobPoster.Tests 
+                  - cd SlackJobPoster
                   - dotnet test
-                  - cd ../../terraform/staging
+                  - cd ../SlackJobPosterReceiver
+                  - dotnet test
+                  - cd ../terraform/staging
                   - terraform init -input=false
                   - terraform apply -input=false -auto-approve
           GitCloneDepth: 0
@@ -156,17 +165,25 @@ Resources:
                   - cd ..
               pre_build:
                 commands:
-                  - cd src/SlackJobPoster
+                  - cd SlackJobPoster
                   - dotnet restore
+                  - cd ../SlackJobPosterReceiver
+                  - dotnet restore
+                  - cd ..
               build:
                 commands:
-                  - env | grep codebuild      # displays environment debug information in log
+                  - cd SlackJobPoster/src/SlackJobPoster
                   - dotnet lambda package -c Release -o ./bin/Release/netcoreapp2.1/SlackJobPoster.zip -f netcoreapp2.1
+                  - cd ../../../SlackJobPosterReceiver/src/SlackJobPosterReceiver
+                  - dotnet lambda package -c Release -o ./bin/Release/netcoreapp2.1/SlackJobPosterReceiver.zip -f netcoreapp2.1
+                  - cd ../../../
               post_build:
                 commands:
-                  - cd ../../test/SlackJobPoster.Tests 
+                  - cd SlackJobPoster
                   - dotnet test
-                  - cd ../../terraform/production
+                  - cd ../SlackJobPosterReceiver
+                  - dotnet test
+                  - cd ../terraform/production
                   - terraform init -input=false
                   - terraform apply -input=false -auto-approve
           GitCloneDepth: 0
