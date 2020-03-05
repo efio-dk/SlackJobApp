@@ -25,9 +25,16 @@ namespace SlackJobPosterReceiver
         {
             context.Logger.LogLine(request.Body);
 
-            JObject parameters = Utility.GetParamsJObject(request.Body);
+            string timestamp = request.Headers["X-Slack-Request-Timestamp"];
+            string sigHeader = request.Headers["X-Slack-Signature"];
 
-            if (parameters.SelectToken("token").Value<string>() != GlobalVars.SLACK_VERIFICATION_TOKEN)
+            context.Logger.LogLine("\n\n" + timestamp);
+            context.Logger.LogLine(sigHeader);
+
+            string sig_baseString = $"v0:{timestamp}:{request.Body}";
+            string hmacSig = $"v0={Utility.ComputeHmacSha256Hash(sig_baseString, GlobalVars.SLACK_VERIFICATION_TOKEN)}";
+
+            if (hmacSig != sigHeader)
             {
                 var invalidResponse = new APIGatewayProxyResponse
                 {

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Specialized;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Amazon.DynamoDBv2.DocumentModel;
@@ -32,13 +34,6 @@ namespace SlackJobPosterReceiver
 
             //Convert the JSON string from the key payload into a JObject
             return JObject.Parse(qscoll["payload"]);
-        }
-
-        public static JObject GetParamsJObject(string body)
-        {
-            NameValueCollection qscoll = GetParameterCollection(body);
-
-            return JObject.Parse(qscoll["params"]);
         }
 
         public async Task PayloadRouter(JObject payload)
@@ -156,6 +151,19 @@ namespace SlackJobPosterReceiver
 
             //Convert the resulting query string into a collection separated by keys
             return HttpUtility.ParseQueryString(base64Decoded);
+        }
+
+        public static string ComputeHmacSha256Hash(string rawData, string key)
+        {
+            HMACSHA256 hmac = new HMACSHA256(Encoding.ASCII.GetBytes(key));
+            StringBuilder sb = new StringBuilder();
+            byte[] calc_sig = hmac.ComputeHash(Encoding.ASCII.GetBytes(rawData));
+            for (int i = 0; i < calc_sig.Length; i++)
+            {
+                sb.Append(calc_sig[i].ToString("x2"));
+            }
+
+            return sb.ToString();
         }
     }
 }
