@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -28,6 +29,7 @@ namespace SlackJobPosterReceiver.API
         public async Task<JObject> PostOpportunity(string msgHeader, string leadId, string opportunityStatusName)
         {
             string statusId = await GetStatusId(opportunityStatusName);
+            Console.WriteLine(statusId);
 
             JObject opportunityObj = new JObject
             {
