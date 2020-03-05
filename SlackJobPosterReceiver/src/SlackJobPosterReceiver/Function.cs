@@ -23,8 +23,6 @@ namespace SlackJobPosterReceiver
 
         public async Task<APIGatewayProxyResponse> Get(APIGatewayProxyRequest request, ILambdaContext context)
         {
-            context.Logger.LogLine(request.Body);
-
             //consume request from Slack actions
             JObject payload = Utility.GetBodyJObject(request.Body);
 

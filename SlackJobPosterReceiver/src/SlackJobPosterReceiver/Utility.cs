@@ -27,10 +27,19 @@ namespace SlackJobPosterReceiver
 
         public static JObject GetBodyJObject(string body)
         {
-            //Convert the base64 encoded body into a string
-            string base64Encoded = body;
-            byte[] data = System.Convert.FromBase64String(base64Encoded);
-            string base64Decoded = System.Text.Encoding.ASCII.GetString(data);
+            string base64Decoded;
+
+            try
+            {
+                //Convert the base64 encoded body into a string
+                string base64Encoded = body;
+                byte[] data = System.Convert.FromBase64String(base64Encoded);
+                base64Decoded = System.Text.Encoding.ASCII.GetString(data);
+            }
+            catch
+            {
+                base64Decoded = body;
+            }
 
             //Convert the resulting query string into a collection separated by keys
             NameValueCollection qscoll = HttpUtility.ParseQueryString(base64Decoded);
