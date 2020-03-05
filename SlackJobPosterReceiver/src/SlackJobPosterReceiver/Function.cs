@@ -23,13 +23,8 @@ namespace SlackJobPosterReceiver
 
         public async Task<APIGatewayProxyResponse> Get(APIGatewayProxyRequest request, ILambdaContext context)
         {
-            context.Logger.LogLine(request.Body);
-
             string timestamp = request.Headers["X-Slack-Request-Timestamp"];
             string sigHeader = request.Headers["X-Slack-Signature"];
-
-            context.Logger.LogLine("\n\n" + timestamp);
-            context.Logger.LogLine(sigHeader);
 
             string sig_baseString = $"v0:{timestamp}:{request.Body}";
             string hmacSig = $"v0={Utility.ComputeHmacSha256Hash(sig_baseString, GlobalVars.SLACK_VERIFICATION_TOKEN)}";
