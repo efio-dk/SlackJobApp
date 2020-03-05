@@ -20,8 +20,9 @@ namespace SlackJobPoster
 {
     public class Function
     {
-        private HttpClient client;
+        private readonly HttpClient client;
         private string webhook_url;
+
         public Function()
         {
             client = new HttpClient();
@@ -61,7 +62,6 @@ namespace SlackJobPoster
             SlackAction actions = new SlackAction("actions")
                             .AddElement(customerSelect);
 
-
             // check if we have detected a customer and if so set it as initial option
             if (!string.IsNullOrEmpty(jobPostCustomer))
             {
@@ -84,9 +84,11 @@ namespace SlackJobPoster
 
         private Dictionary<string, Option> GetListOfCustomers()
         {
-            Dictionary<string, Option> customers = new Dictionary<string, Option>();
-            customers.Add("DSB", new Option("DSB", "lead_q9WAvUeMbAj9zBsINtZgzxBTXfMwxixGyYmR9rk0ovP"));
-            customers.Add("Efio", new Option("Efio", "lead_Xb8JdJdPYo7YfJ7oXro1E4IrcG983NLZYABhWTcSiOq"));
+            Dictionary<string, Option> customers = new Dictionary<string, Option>
+            {
+                { "DSB", new Option("DSB", "lead_q9WAvUeMbAj9zBsINtZgzxBTXfMwxixGyYmR9rk0ovP") },
+                { "Efio", new Option("Efio", "lead_Xb8JdJdPYo7YfJ7oXro1E4IrcG983NLZYABhWTcSiOq") }
+            };
 
             return customers;
         }

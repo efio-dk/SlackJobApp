@@ -206,20 +206,17 @@ namespace SlackJobPoster.Tests
                 BaseAddress = new Uri("http://test.com/"),
             };
 
-
             var function = new Function();
             JObject payload = function.BuildSlackPayload("header", "http://test.com");
 
-            var expectedResponse = new HttpResponseMessage();
-            expectedResponse.StatusCode = HttpStatusCode.OK;
+            var expectedResponse = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK
+            };
 
             var actualResponse = await httpClient.PostAsJsonAsync("", payload);
 
-
-
             Assert.Equal(expectedResponse.StatusCode, actualResponse.StatusCode);
-
         }
-
     }
 }

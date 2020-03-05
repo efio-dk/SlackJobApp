@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <CodeAnalysisRuleSet>/Users/elitsamarinovska/Downloads/SlackJobPosterReceiver/src/SlackJobPosterReceiver/.vs/SlackJobPosterReceiver/RuleSet.xml</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>./RuleSet.xml</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Amazon.Lambda.Core" Version="1.1.0" />
