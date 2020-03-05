@@ -14,8 +14,8 @@ resource "aws_lambda_function" "stg-SlackJobPoster-lambda" {
   handler          = "SlackJobPoster::SlackJobPoster.Function::FunctionHandler"
   runtime          = "dotnetcore2.1"
   role             = "arn:aws:iam::833191605868:role/SlackJobPosterRole"
-  filename         = "../../src/SlackJobPoster/bin/Debug/netcoreapp2.1/SlackJobPoster.zip"
-  source_code_hash = filebase64sha256("../../src/SlackJobPoster/bin/Debug/netcoreapp2.1/SlackJobPoster.zip")
+  filename         = "../../SlackJobPoster/src/SlackJobPoster/bin/Debug/netcoreapp2.1/SlackJobPoster.zip"
+  source_code_hash = filebase64sha256("../../SlackJobPoster/src/SlackJobPoster/bin/Debug/netcoreapp2.1/SlackJobPoster.zip")
   timeout          = 10
   memory_size      = 256
 
@@ -28,4 +28,66 @@ resource "aws_lambda_function" "stg-SlackJobPoster-lambda" {
 resource "aws_lambda_event_source_mapping" "stg-incoming-sqs" {
   event_source_arn = data.aws_sqs_queue.stg-processed-job-post-queue.arn
   function_name    = aws_lambda_function.stg-SlackJobPoster-lambda.arn
+}
+
+resource "aws_lambda_function" "stg-SlackJobPosterReceiver-lambda" {
+  function_name    = "stg-SlackJobPosterReceiver"
+  handler          = "SlackJobPosterReceiver::SlackJobPosterReceiver.Function::Get"
+  runtime          = "dotnetcore2.1"
+  role             = "arn:aws:iam::833191605868:role/DeleteThisRole"
+  filename         = "../../SlackJobPosterReceiver/src/SlackJobPosterReceiver/bin/Debug/netcoreapp2.1/SlackJobPosterReceiver.zip"
+  source_code_hash = filebase64sha256("../../SlackJobPosterReceiver/src/SlackJobPosterReceiver/bin/Debug/netcoreapp2.1/SlackJobPosterReceiver.zip")
+  timeout          = 10
+  memory_size      = 256
+
+  tags = {
+    Name        = "stg-SlackJobPosterReceiver"
+    Environment = "staging"
+  }
+}
+
+
+# API Gateway
+resource "aws_api_gateway_rest_api" "slack-app-api" {
+  name = "slackAppApi"
+}
+
+resource "aws_api_gateway_resource" "slack-receiver-resource" {
+  path_part   = "slackReceiver"
+  parent_id   = aws_api_gateway_rest_api.slack-app-api.root_resource_id
+  rest_api_id = aws_api_gateway_rest_api.slack-app-api.id
+}
+
+resource "aws_api_gateway_method" "slack-receiver-any" {
+  rest_api_id   = aws_api_gateway_rest_api.slack-app-api.id
+  resource_id   = aws_api_gateway_resource.slack-receiver-resource.id
+  http_method   = "ANY"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "integration" {
+  rest_api_id             = aws_api_gateway_rest_api.slack-app-api.id
+  resource_id             = aws_api_gateway_resource.slack-receiver-resource.id
+  http_method             = aws_api_gateway_method.slack-receiver-any.http_method
+  integration_http_method = "ANY"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.stg-SlackJobPosterReceiver-lambda.invoke_arn
+}
+
+# Dynamo DB
+resource "aws_dynamodb_table" "stg-slack-leads-table" {
+  name           = "stg_SlackLeads"
+  hash_key       = "message_ts"
+  read_capacity  = 5
+  write_capacity = 5
+
+  attribute {
+    name = "message_ts"
+    type = "S"
+  }
+
+  tags = {
+    Name        = "stg-slack-leads-table"
+    Environment = "staging"
+  }
 }
