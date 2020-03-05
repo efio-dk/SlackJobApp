@@ -38,7 +38,7 @@ namespace SlackJobPosterReceiver.API
                 ["confidence"] = 0
             };
 
-            if (string.IsNullOrEmpty(statusId))
+            if (!string.IsNullOrEmpty(statusId))
                 opportunityObj.Add("status_id", statusId);
 
             HttpResponseMessage response = await _client.PostAsJsonAsync("https://api.close.com/api/v1/opportunity/", opportunityObj, GlobalVars.CLOSE_TOKEN);
