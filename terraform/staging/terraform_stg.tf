@@ -3,10 +3,25 @@ provider "aws" {
   region = "eu-west-1"
 }
 
-# Data resources (SQS)
+
+# Data resources (SQS, SSM)
 data "aws_sqs_queue" "stg-processed-job-post-queue" {
   name = "stg_ProcessedJobPosts"
 }
+
+
+data "aws_ssm_parameter" "slackleads-table" {
+  name = "TABLE_SLACK_LEADS" # our SSM parameter's name
+}
+
+data "aws_ssm_parameter" "slack-token" {
+  name = "SLACK_TOKEN" # our SSM parameter's name
+}
+
+data "aws_ssm_parameter" "close-token" {
+  name = "CLOSE_TOKEN" # our SSM parameter's name
+}
+
 
 # Lambda
 resource "aws_lambda_function" "stg-SlackJobPoster-lambda" {
@@ -44,6 +59,14 @@ resource "aws_lambda_function" "stg-SlackJobPosterReceiver-lambda" {
     Name        = "stg-SlackJobPosterReceiver"
     Environment = "staging"
   }
+
+  environment {
+    variables = {
+      AWS_TABLE_SLACK_LEADS = data.aws_ssm_parameter.slackleads-table.value
+      SLACK_TOKEN           = data.aws_ssm_parameter.slack-token.value
+      CLOSE_TOKEN           = data.aws_ssm_parameter.close-token.value
+    }
+  }
 }
 
 
@@ -72,6 +95,13 @@ resource "aws_api_gateway_integration" "integration" {
   integration_http_method = "ANY"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.stg-SlackJobPosterReceiver-lambda.invoke_arn
+}
+
+resource "aws_api_gateway_deployment" "slack-receiver-api-deployment" {
+  depends_on = [aws_api_gateway_integration.integration]
+
+  rest_api_id = aws_api_gateway_rest_api.slack-app-api.id
+  stage_name  = "staging"
 }
 
 # Dynamo DB
