@@ -48,7 +48,7 @@ namespace SlackJobPosterReceiver.API
 
         public async Task<string> GetStatusId(string statusName)
         {
-            HttpResponseMessage response = await _client.GetAsJsonAsync("https://api.close.com/api/v1/status/opportunity/");
+            HttpResponseMessage response = await _client.GetAsJsonAsync("https://api.close.com/api/v1/status/opportunity/", GlobalVars.CLOSE_TOKEN);
 
             GlobalVars.CONTEXT.Logger.LogLine(response.Content.ToString());
             JObject responseJObj = await response.Content.ReadAsJsonAsync<JObject>();
