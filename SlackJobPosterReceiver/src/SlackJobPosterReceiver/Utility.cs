@@ -64,7 +64,7 @@ namespace SlackJobPosterReceiver
                         await QualifyLead(msgTs, msgHeader, hookUrl, triggerId);
                         break;
                     case "addToClose_btn":
-                        string optionValue = payload..SelectToken("$..elements[?(@.action_id=='customer_select')].initial_option.value").Value<string>();
+                        string optionValue = payload.SelectToken("$..elements[?(@.action_id=='customer_select')].initial_option.value").Value<string>();
                         await AddToClose(msgTs, msgHeader, hookUrl, optionValue);
                         break;
                     case "customer_select":
