@@ -53,7 +53,8 @@ namespace SlackJobPosterReceiver
             if (payload.GetValue("type").Value<string>() == "block_actions")
             {
                 string msgTs = payload.SelectToken("container.message_ts").Value<string>();
-                string msgHeader = payload.SelectToken("message.blocks[2].text.text").Value<string>();
+                // quering with JsonPath queries for easier identification of the elements when in array
+                string msgHeader = payload.SelectToken("$.blocks[?(@.block_id=='msg_header')].text.text").Value<string>();
                 string hookUrl = payload.SelectToken("response_url").Value<string>();
 
                 switch (payload.SelectToken("actions[0].action_id").Value<string>())
@@ -63,7 +64,7 @@ namespace SlackJobPosterReceiver
                         await QualifyLead(msgTs, msgHeader, hookUrl, triggerId);
                         break;
                     case "addToClose_btn":
-                        string optionValue = payload.SelectToken("message.blocks[4].elements[0].initial_option.value").Value<string>();
+                        string optionValue = payload..SelectToken("$..elements[?(@.action_id=='customer_select')].initial_option.value").Value<string>();
                         await AddToClose(msgTs, msgHeader, hookUrl, optionValue);
                         break;
                     case "customer_select":
