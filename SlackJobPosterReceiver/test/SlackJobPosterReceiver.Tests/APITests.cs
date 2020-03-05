@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Amazon.Lambda.TestUtilities;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json.Linq;
@@ -68,6 +69,7 @@ namespace SlackJobPosterReceiver.Tests
             var expectedJson = JObject.Parse("{\"test\":\"TestOpportunty\"}");
 
             var closePoster = new ClosePoster(httpClient);
+            GlobalVars.CONTEXT = new TestLambdaContext();
             var actualJson = await closePoster.PostOpportunity("", "", "");
 
             Assert.True(JToken.DeepEquals(expectedJson, actualJson));
