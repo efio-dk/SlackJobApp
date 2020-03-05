@@ -23,13 +23,25 @@ namespace SlackJobPosterReceiver
 
         public async Task<APIGatewayProxyResponse> Get(APIGatewayProxyRequest request, ILambdaContext context)
         {
-            string timestamp = request.Headers["X-Slack-Request-Timestamp"];
-            string sigHeader = request.Headers["X-Slack-Signature"];
+            try
+            {
+                string timestamp = request.Headers["X-Slack-Request-Timestamp"];
+                string sigHeader = request.Headers["X-Slack-Signature"];
 
-            string sig_baseString = $"v0:{timestamp}:{request.Body}";
-            string hmacSig = $"v0={Utility.ComputeHmacSha256Hash(sig_baseString, GlobalVars.SLACK_VERIFICATION_TOKEN)}";
+                string sig_baseString = $"v0:{timestamp}:{request.Body}";
+                string hmacSig = $"v0={Utility.ComputeHmacSha256Hash(sig_baseString, GlobalVars.SLACK_VERIFICATION_TOKEN)}";
 
-            if (hmacSig != sigHeader)
+                if (hmacSig != sigHeader)
+                {
+                    var invalidResponse = new APIGatewayProxyResponse
+                    {
+                        StatusCode = (int)HttpStatusCode.Unauthorized
+                    };
+
+                    return invalidResponse;
+                }
+            }
+            catch
             {
                 var invalidResponse = new APIGatewayProxyResponse
                 {
