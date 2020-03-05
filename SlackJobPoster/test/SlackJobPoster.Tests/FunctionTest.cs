@@ -36,7 +36,8 @@ namespace SlackJobPoster.Tests
                                             ""type"": ""mrkdwn"",
                                             ""text"": ""*header*\nhttp://test.com""
                                         }},
-                                        ""type"": ""section""
+                                        ""type"": ""section"",
+                                        ""block_id"": ""msg_header""
                                         }},
                                         {{
                                         ""block_id"": ""actions"",
@@ -115,7 +116,8 @@ namespace SlackJobPoster.Tests
                                             ""type"": ""mrkdwn"",
                                             ""text"": ""*header*\nhttp://test.com""
                                         }},
-                                        ""type"": ""section""
+                                        ""type"": ""section"",
+                                        ""block_id"": ""msg_header""
                                         }},
                                         {{
                                         ""block_id"": ""actions"",
