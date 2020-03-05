@@ -22,6 +22,10 @@ data "aws_ssm_parameter" "close-token" {
   name = "CLOSE_TOKEN" # our SSM parameter's name
 }
 
+data "aws_ssm_parameter" "slack-verification-token" {
+  name = "SLACK_VERIFICATION_TOKEN" # our SSM parameter's name
+}
+
 
 # Lambda
 resource "aws_lambda_function" "prod-SlackJobPoster-lambda" {
@@ -65,6 +69,7 @@ resource "aws_lambda_function" "prod-SlackJobPosterReceiver-lambda" {
       AWS_TABLE_SLACK_LEADS = data.aws_ssm_parameter.slackleads-table.value
       SLACK_TOKEN           = data.aws_ssm_parameter.slack-token.value
       CLOSE_TOKEN           = data.aws_ssm_parameter.close-token.value
+      SLACK_VERIFICATION_TOKEN = data.aws_ssm_parameter.slack-verification-token.value
     }
   }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Specialized;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -27,25 +28,17 @@ namespace SlackJobPosterReceiver
 
         public static JObject GetBodyJObject(string body)
         {
-            string base64Decoded;
-
-            try
-            {
-                //Convert the base64 encoded body into a string
-                string base64Encoded = body;
-                byte[] data = System.Convert.FromBase64String(base64Encoded);
-                base64Decoded = System.Text.Encoding.ASCII.GetString(data);
-            }
-            catch
-            {
-                base64Decoded = body;
-            }
-
-            //Convert the resulting query string into a collection separated by keys
-            NameValueCollection qscoll = HttpUtility.ParseQueryString(base64Decoded);
+            NameValueCollection qscoll = GetParameterCollection(body);
 
             //Convert the JSON string from the key payload into a JObject
             return JObject.Parse(qscoll["payload"]);
+        }
+
+        public static JObject GetParamsJObject(string body)
+        {
+            NameValueCollection qscoll = GetParameterCollection(body);
+
+            return JObject.Parse(qscoll["params"]);
         }
 
         public async Task PayloadRouter(JObject payload)
@@ -143,6 +136,26 @@ namespace SlackJobPosterReceiver
             await _slackApi.UpdateMessage(updatedMsg, hookUrl);
 
             await _db.AddLeadToDB(msgTs, msgHeader, leadId);
+        }
+
+        private static NameValueCollection GetParameterCollection(string queryString)
+        {
+            string base64Decoded;
+
+            try
+            {
+                //Convert the base64 encoded queryString into a string
+                string base64Encoded = queryString;
+                byte[] data = System.Convert.FromBase64String(base64Encoded);
+                base64Decoded = System.Text.Encoding.ASCII.GetString(data);
+            }
+            catch
+            {
+                base64Decoded = queryString;
+            }
+
+            //Convert the resulting query string into a collection separated by keys
+            return HttpUtility.ParseQueryString(base64Decoded);
         }
     }
 }

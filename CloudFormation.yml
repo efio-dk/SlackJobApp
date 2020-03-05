@@ -48,6 +48,9 @@ Resources:
         - Name: CLOSE_TOKEN
           Type: PARAMETER_STORE
           Value: "CLOSE_TOKEN"
+        - Name: SLACK_VERIFICATION_TOKEN
+          Type: PARAMETER_STORE
+          Value: "SLACK_VERIFICATION_TOKEN"
       Name: !Sub '${AWS::StackName}-Development'
       QueuedTimeoutInMinutes: 5
       ServiceRole: !Ref DeploymentPipelinePoCRole
@@ -95,6 +98,9 @@ Resources:
         - Name: CLOSE_TOKEN
           Type: PARAMETER_STORE
           Value: "CLOSE_TOKEN"
+        - Name: SLACK_VERIFICATION_TOKEN
+          Type: PARAMETER_STORE
+          Value: "SLACK_VERIFICATION_TOKEN"
       Name: !Sub '${AWS::StackName}-Staging'
       QueuedTimeoutInMinutes: 5
       ServiceRole: !Ref DeploymentPipelinePoCRole
@@ -170,6 +176,9 @@ Resources:
         - Name: CLOSE_TOKEN
           Type: PARAMETER_STORE
           Value: "CLOSE_TOKEN"
+        - Name: SLACK_VERIFICATION_TOKEN
+          Type: PARAMETER_STORE
+          Value: "SLACK_VERIFICATION_TOKEN"
       Name: !Sub '${AWS::StackName}-Prod'
       QueuedTimeoutInMinutes: 5
       ServiceRole: !Ref DeploymentPipelinePoCRole

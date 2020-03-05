@@ -23,10 +23,22 @@ namespace SlackJobPosterReceiver
 
         public async Task<APIGatewayProxyResponse> Get(APIGatewayProxyRequest request, ILambdaContext context)
         {
+            context.Logger.LogLine(request.Body);
+
+            JObject parameters = Utility.GetParamsJObject(request.Body);
+
+            if (parameters.SelectToken("token").Value<string>() != GlobalVars.SLACK_VERIFICATION_TOKEN)
+            {
+                var invalidResponse = new APIGatewayProxyResponse
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized
+                };
+
+                return invalidResponse;
+            }
+
             //consume request from Slack actions
             JObject payload = Utility.GetBodyJObject(request.Body);
-
-            context.Logger.LogLine(payload.ToString());
 
             //depending on the payload, perform needed action
             await _utils.PayloadRouter(payload);
