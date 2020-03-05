@@ -29,7 +29,7 @@ namespace SlackJobPosterReceiver.API
         public async Task<JObject> PostOpportunity(string msgHeader, string leadId, string opportunityStatusName)
         {
             string statusId = await GetStatusId(opportunityStatusName);
-            Console.WriteLine(statusId);
+            GlobalVars.CONTEXT.Logger.LogLine(statusId);
 
             JObject opportunityObj = new JObject
             {
