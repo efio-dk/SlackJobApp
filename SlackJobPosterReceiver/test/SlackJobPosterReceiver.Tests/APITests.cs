@@ -68,7 +68,7 @@ namespace SlackJobPosterReceiver.Tests
             var expectedJson = JObject.Parse("{\"test\":\"TestOpportunty\"}");
 
             var closePoster = new ClosePoster(httpClient);
-            var actualJson = await closePoster.PostOpportunity("", "");
+            var actualJson = await closePoster.PostOpportunity("", "", "");
 
             Assert.True(JToken.DeepEquals(expectedJson, actualJson));
         }

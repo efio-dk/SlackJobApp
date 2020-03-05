@@ -92,7 +92,7 @@ namespace SlackJobPosterReceiver
                 lead_id = optionValue;
 
             //post opportunity to Close 
-            await _closeApi.PostOpportunity(msgHeader, lead_id);
+            await _closeApi.PostOpportunity(msgHeader, lead_id, "Qualified");
 
             //post updated message to Slack
             JObject finalCloseMsg = SlackHelper.BuildDefaultSlackPayload(msgHeader, null, SlackPostState.FINAL, lead_id);
@@ -124,7 +124,7 @@ namespace SlackJobPosterReceiver
             string leadId = leadObj.SelectToken("id").Value<string>();
 
             //post opportunity to Close 
-            await _closeApi.PostOpportunity(msgHeader, leadId);
+            await _closeApi.PostOpportunity(msgHeader, leadId, "Qualified");
 
             //post updated message to Slack which will change to the final message
             JObject updatedMsg = SlackHelper.BuildDefaultSlackPayload(msgHeader, null, SlackPostState.FINAL, leadId);
