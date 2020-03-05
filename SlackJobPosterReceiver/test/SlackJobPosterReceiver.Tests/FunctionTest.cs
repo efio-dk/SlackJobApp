@@ -8,6 +8,7 @@ using SlackMessageBuilder;
 
 namespace SlackJobPosterReceiver.Tests
 {
+    /*
     public class FunctionTest
     {
         public FunctionTest()
@@ -366,5 +367,5 @@ namespace SlackJobPosterReceiver.Tests
         public void PayloadRouterQualifyLeadTest()
         {
         }
-    }
+    }*/
 }
