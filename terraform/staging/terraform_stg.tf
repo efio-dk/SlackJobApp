@@ -42,6 +42,12 @@ resource "aws_lambda_function" "stg-SlackJobPoster-lambda" {
     Name        = "stg-SlackJobPoster"
     Environment = "staging"
   }
+
+  environment {
+    variables = {
+      CLOSE_TOKEN = data.aws_ssm_parameter.close-token.value
+    }
+  }
 }
 
 resource "aws_lambda_event_source_mapping" "stg-incoming-sqs" {

@@ -46,16 +46,16 @@ namespace SlackJobPoster
             string jobPostUrl = jobPost.Value<string>("sourceId");
             string jobPostCustomer = jobPost.Value<string>("customer");
 
-            JObject jsonObject = BuildSlackPayload(jobPostHeader, jobPostUrl, jobPostCustomer);
+            JObject jsonObject = await BuildSlackPayload(jobPostHeader, jobPostUrl, jobPostCustomer);
 
             await client.PostAsJsonAsync(webhook_url, jsonObject);
 
             await Task.CompletedTask;
         }
 
-        public JObject BuildSlackPayload(string header, string sourceId, string jobPostCustomer = null)
+        public async Task<JObject> BuildSlackPayload(string header, string sourceId, string jobPostCustomer = null)
         {
-            Dictionary<string, Option> customers = GetListOfCustomers();
+            Dictionary<string, Option> customers = await GetListOfCustomers();
 
             BlocksBuilder builder = new BlocksBuilder();
             StaticSelect customerSelect = new StaticSelect("customer_select", customers.Values.ToList(), "Customer");
@@ -82,15 +82,26 @@ namespace SlackJobPoster
             return builder.GetJObject();
         }
 
-        private Dictionary<string, Option> GetListOfCustomers()
+        public async Task<Dictionary<string, Option>> GetListOfCustomers()
         {
-            Dictionary<string, Option> customers = new Dictionary<string, Option>
+            Dictionary<string, Option> customers = new Dictionary<string, Option>();
+            JObject leads = await GetLeads();
+
+            foreach (JObject lead in leads.SelectToken("data").Value<JArray>())
             {
-                { "DSB", new Option("DSB", "lead_q9WAvUeMbAj9zBsINtZgzxBTXfMwxixGyYmR9rk0ovP") },
-                { "Efio", new Option("Efio", "lead_Xb8JdJdPYo7YfJ7oXro1E4IrcG983NLZYABhWTcSiOq") }
-            };
+                customers.Add(lead["display_name"].Value<string>(), new Option(lead["display_name"].Value<string>(), lead["id"].Value<string>()));
+            }
 
             return customers;
+        }
+
+        private async Task<JObject> GetLeads()
+        {
+            HttpResponseMessage response = await client.GetAsJsonAsync("https://api.close.com/api/v1/lead/", Environment.GetEnvironmentVariable("CLOSE_TOKEN"));
+
+            JObject responseJObj = await response.Content.ReadAsJsonAsync<JObject>();
+
+            return responseJObj;
         }
     }
 }

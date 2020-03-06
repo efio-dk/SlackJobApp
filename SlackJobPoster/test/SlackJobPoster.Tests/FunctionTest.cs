@@ -13,7 +13,7 @@ namespace SlackJobPoster.Tests
     public class FunctionTest
     {
         [Fact]
-        public void SlackPayloadWithoutCustomerTest()
+        public async Task SlackPayloadWithoutCustomerTest()
         {
             var expectedJson = $@"{{
                                     ""blocks"": [
@@ -87,13 +87,13 @@ namespace SlackJobPoster.Tests
             JObject expectedJObject = JObject.Parse(expectedJson);
 
             var function = new Function();
-            JObject payload = function.BuildSlackPayload("header", "http://test.com");
+            JObject payload = await function.BuildSlackPayload("header", "http://test.com");
 
             Assert.True(JToken.DeepEquals(expectedJObject, payload));
         }
 
         [Fact]
-        public void SlackPayloadWithCustomerTest()
+        public async Task SlackPayloadWithCustomerTest()
         {
             var expectedJson = $@"{{
                                     ""blocks"": [
@@ -181,7 +181,7 @@ namespace SlackJobPoster.Tests
 
             JObject expectedJObject = JObject.Parse(expectedJson);
             var function = new Function();
-            JObject payload = function.BuildSlackPayload("header", "http://test.com", "DSB");
+            JObject payload = await function.BuildSlackPayload("header", "http://test.com", "DSB");
 
             Assert.True(JToken.DeepEquals(expectedJObject, payload));
         }
@@ -209,7 +209,7 @@ namespace SlackJobPoster.Tests
             };
 
             var function = new Function();
-            JObject payload = function.BuildSlackPayload("header", "http://test.com");
+            JObject payload = await function.BuildSlackPayload("header", "http://test.com");
 
             var expectedResponse = new HttpResponseMessage
             {

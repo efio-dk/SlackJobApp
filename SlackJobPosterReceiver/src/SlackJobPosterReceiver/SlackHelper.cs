@@ -42,7 +42,7 @@ namespace SlackJobPosterReceiver
 
             builder.AddBlock(new Section(new Text(" ")));
             builder.AddBlock(new Section(new Text(" ")));
-            builder.AddBlock(new Section(new Text(header, "mrkdwn")));
+            builder.AddBlock(new Section(new Text(header, "mrkdwn"), "msg_header"));
 
             if (postState == SlackPostState.ACTIONS)
                 builder.AddBlock(actions);

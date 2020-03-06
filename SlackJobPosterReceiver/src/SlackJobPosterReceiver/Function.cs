@@ -24,7 +24,7 @@ namespace SlackJobPosterReceiver
         public async Task<APIGatewayProxyResponse> Get(APIGatewayProxyRequest request, ILambdaContext context)
         {
             GlobalVars.CONTEXT = context;
-            
+
             try
             {
                 string timestamp = request.Headers["X-Slack-Request-Timestamp"];
