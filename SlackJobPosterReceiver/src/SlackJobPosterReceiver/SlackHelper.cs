@@ -21,19 +21,21 @@ namespace SlackJobPosterReceiver
             return builder.GetJObject().ToString();
         }
 
-        public static JObject BuildDefaultSlackPayload(string header, Option selectedOption, SlackPostState postState, string leadId = "")
+        public static JObject BuildDefaultSlackPayload(string header, Option selectedOption, SlackPostState postState, string leadId = "", Dictionary<string, Option> customers = null)
         {
-            Dictionary<string, Option> customers = GetListOfCustomers();
-
             BlocksBuilder builder = new BlocksBuilder();
-            StaticSelect customerSelect = new StaticSelect("customer_select", customers.Values.ToList(), "Customer");
-            SlackAction actions = new SlackAction("actions")
-                            .AddElement(customerSelect);
+            SlackAction actions = new SlackAction("actions");
+
+            if (!(customers is null))
+            {
+                StaticSelect customerSelect = new StaticSelect("customer_select", customers.Values.ToList(), "Customer");
+                actions.AddElement(customerSelect);
+
+                if (!(selectedOption is null))
+                    customerSelect.AddInitialOption(selectedOption);
+            }
 
             actions.AddElement(new Button("addToClose_btn", "Add to Close", ButtonStyle.PRIMARY));
-
-            if (!(selectedOption is null))
-                customerSelect.AddInitialOption(selectedOption);
 
             // adding button in the proper place
             actions.AddElement(new Button("qualifyLead_btn", "Qualify Lead"));
@@ -50,18 +52,6 @@ namespace SlackJobPosterReceiver
             builder.AddBlock(new Divider());
 
             return builder.GetJObject();
-        }
-
-        //get static list of cutomers
-        private static Dictionary<string, Option> GetListOfCustomers()
-        {
-            Dictionary<string, Option> customers = new Dictionary<string, Option>
-            {
-                { "DSB", new Option("DSB", "lead_q9WAvUeMbAj9zBsINtZgzxBTXfMwxixGyYmR9rk0ovP") },
-                { "Efio", new Option("Efio", "lead_Xb8JdJdPYo7YfJ7oXro1E4IrcG983NLZYABhWTcSiOq") }
-            };
-
-            return customers;
         }
     }
 }

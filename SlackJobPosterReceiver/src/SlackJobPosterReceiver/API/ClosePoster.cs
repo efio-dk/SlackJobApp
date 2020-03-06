@@ -59,5 +59,14 @@ namespace SlackJobPosterReceiver.API
 
             return statusId;
         }
+
+        public async Task<JObject> GetLeads()
+        {
+            HttpResponseMessage response = await _client.GetAsJsonAsync("https://api.close.com/api/v1/lead/", GlobalVars.CLOSE_TOKEN);
+
+            JObject responseJObj = await response.Content.ReadAsJsonAsync<JObject>();
+
+            return responseJObj;
+        }
     }
 }

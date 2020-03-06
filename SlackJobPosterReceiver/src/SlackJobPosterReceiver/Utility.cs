@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -106,11 +107,11 @@ namespace SlackJobPosterReceiver
             Option selected = new Option(customerName, leadId);
 
             //post updated message to Slack which will remove the buttons
-            JObject updatedMsg = SlackHelper.BuildDefaultSlackPayload(msgHeader, selected, SlackPostState.INITIAL, leadId);
+            JObject updatedMsg = SlackHelper.BuildDefaultSlackPayload(msgHeader, selected, SlackPostState.INITIAL, leadId, await GetListOfCustomers());
             await _slackApi.UpdateMessage(updatedMsg, hookUrl);
 
             //post updated message to Slack which will add the right selection and buttons
-            updatedMsg = SlackHelper.BuildDefaultSlackPayload(msgHeader, selected, SlackPostState.ACTIONS, leadId);
+            updatedMsg = SlackHelper.BuildDefaultSlackPayload(msgHeader, selected, SlackPostState.ACTIONS, leadId, await GetListOfCustomers());
             await _slackApi.UpdateMessage(updatedMsg, hookUrl);
         }
 
@@ -164,6 +165,20 @@ namespace SlackJobPosterReceiver
             }
 
             return sb.ToString();
+        }
+
+        //get list of cutomers from Close
+        public async Task<Dictionary<string, Option>> GetListOfCustomers()
+        {
+            Dictionary<string, Option> customers = new Dictionary<string, Option>();
+            JObject leads = await _closeApi.GetLeads();
+
+            foreach(JObject lead in leads.SelectToken("data").Value<JArray>())
+            {
+                customers.Add(lead["display_name"].Value<string>(), new Option(lead["display_name"].Value<string>(), lead["id"].Value<string>()));
+            }
+
+            return customers;
         }
     }
 }
