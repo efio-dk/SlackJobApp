@@ -15,7 +15,7 @@ data "aws_ssm_parameter" "slackleads-table" {
 }
 
 data "aws_ssm_parameter" "slackskills-table" {
-  name = "AWS_TABLE_SLACK_SKILLS" # our SSM parameter's name
+  name = "TABLE_SLACK_SKILLS" # our SSM parameter's name
 }
 
 data "aws_ssm_parameter" "slack-token" {
