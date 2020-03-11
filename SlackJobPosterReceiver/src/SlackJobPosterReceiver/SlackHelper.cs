@@ -8,7 +8,7 @@ namespace SlackJobPosterReceiver
 {
     public static class SlackHelper
     {
-        public static string GetModal(string message_ts, string hookUrl)
+        public static string GetQualificationModal(string message_ts, string hookUrl)
         {
             //create Slack modal
             ModalBuilder builder = new ModalBuilder("Qualify Lead", message_ts).AddPrivateMetadata(hookUrl);
@@ -17,6 +17,19 @@ namespace SlackJobPosterReceiver
                     new PlainTextInput("customer_name", "Customer name goes here")
                     , "Customer name"
                     , "Customer name as it will appear in Close", "customer_block"));
+
+            return builder.GetJObject().ToString();
+        }
+
+        public static string GetAddSkillModal()
+        {
+            //create Slack modal
+            ModalBuilder builder = new ModalBuilder("Add Skill", "addSkill_view");
+            builder.AddBlock(
+                new Input(
+                    new PlainTextInput("skill_name", "Skill name goes here")
+                    , "Skill name"
+                    , "Skill name to be filtered", "addSkill_block"));
 
             return builder.GetJObject().ToString();
         }
@@ -50,6 +63,37 @@ namespace SlackJobPosterReceiver
                 builder.AddBlock(new Section(new Text($":white_check_mark: *Opportunity added to <https://app.close.com/lead/{leadId}|Close.com>*", "mrkdwn")));
 
             builder.AddBlock(new Divider());
+
+            return builder.GetJObject();
+        }
+
+        public static JObject BuildDefaultSlackHome(string userId, List<string> skilloptions)
+        {
+            Home homeView = new Home();
+            homeView.AddBlock(new Section(new Text(" ")));
+            homeView.AddBlock(new Section(new Text(" ")));
+
+            Section fields = new Section();
+            List<Option> options = new List<Option>();
+
+            foreach (string option in skilloptions)
+            {
+                fields.AddField(option);
+                options.Add(new Option(option, option));
+            }
+
+            //add fields array
+            homeView.AddBlock(fields);
+
+            homeView.AddBlock(new Divider());
+
+            Section multiStaticSelect = new Section(new Text("Pick one or more skills to be removed"));
+            multiStaticSelect.AddAccessory(new MultiLineSelect(options, "Select items"));
+            homeView.AddBlock(multiStaticSelect);
+
+            homeView.AddBlock(new SlackAction("home_actions").AddElement(new Button("addSkills_btn", "Add skills", ButtonStyle.PRIMARY)));
+
+            ViewBuilder builder = new ViewBuilder(userId, homeView);
 
             return builder.GetJObject();
         }

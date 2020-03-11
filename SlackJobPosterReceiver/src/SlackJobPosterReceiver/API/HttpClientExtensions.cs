@@ -10,7 +10,7 @@ namespace SlackJobPosterReceiver.API
     public static class HttpClientExtensions
     {
         public static Task<HttpResponseMessage> PostAsJsonAsync<T>(
-            this HttpClient httpClient, string url, T data, string apiKey = null)
+            this HttpClient httpClient, string url, T data, string apiKey = null, string authType = "basic")
         {
             var dataAsString = JsonConvert.SerializeObject(data);
             var content = new StringContent(dataAsString);
@@ -18,9 +18,16 @@ namespace SlackJobPosterReceiver.API
 
             if (!(apiKey is null))
             {
-                //add Basic Auth
-                var authToken = Encoding.ASCII.GetBytes($"{apiKey}:");
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(authToken));
+                if (authType == "basic")
+                {
+                    //add Basic Auth
+                    var authToken = Encoding.ASCII.GetBytes($"{apiKey}:");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(authToken));
+                }
+                else if (authType == "token")
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+                }
             }
 
             return httpClient.PostAsync(url, content);

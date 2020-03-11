@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DocumentModel;
@@ -7,33 +8,48 @@ namespace SlackJobPosterReceiver.Database
     public class AWSDB : IDBFacade
     {
         private readonly AmazonDynamoDBClient _client;
-        private readonly Table _leadsDB;
+        private readonly Table _db;
 
         public AWSDB(string tableName)
         {
             _client = new AmazonDynamoDBClient();
-            _leadsDB = Table.LoadTable(_client, tableName);
+            _db = Table.LoadTable(_client, tableName);
         }
 
-        public async Task AddLeadToDB(string message_ts, string header, string leadId = null)
+        public async Task AddToDB(Dictionary<string, string> parameters)
         {
-            Document document = new Document
+            Document document = new Document();
+
+            foreach (KeyValuePair<string, string> param in parameters)
             {
-                ["message_ts"] = message_ts,
-                ["message_text"] = header
-            };
+                document.Add(param.Key, param.Value);
+            }
 
-            if (!(leadId is null))
-                document["lead_id"] = leadId;
-
-            await _leadsDB.PutItemAsync(document);
+            await _db.PutItemAsync(document);
         }
 
-        public async Task<Document> GetLeadFromDB(string message_ts)
+        public async Task<Document> GetFromDB(string key)
         {
-            Document leadDocument = await _leadsDB.GetItemAsync(message_ts);
+            Document document = await _db.GetItemAsync(key);
 
-            return leadDocument;
+            return document;
+        }
+
+        public async Task<List<Document>> GetAllFromDB(string key)
+        {
+            ScanFilter filter = new ScanFilter();
+            filter.AddCondition(key, ScanOperator.IsNotNull);
+
+            Search search = _db.Scan(filter);
+            List<Document> result = new List<Document>();
+
+            do
+            {
+                result.AddRange(await search.GetNextSetAsync());
+            }
+            while (!search.IsDone);
+
+            return result;
         }
     }
 }

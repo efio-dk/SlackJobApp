@@ -28,5 +28,12 @@ namespace SlackJobPosterReceiver.API
         {
             return await _client.PostAsJsonAsync(hookUrl, updatedMsg);
         }
+
+        public async Task<HttpResponseMessage> UpdateHomePage(JObject updatedMsg)
+        {
+            const string url = "https://slack.com/api/views.publish";
+
+            return await _client.PostAsJsonAsync(url, updatedMsg, GlobalVars.SLACK_TOKEN, "token");
+        }
     }
 }

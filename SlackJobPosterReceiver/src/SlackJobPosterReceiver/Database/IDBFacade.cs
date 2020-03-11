@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DocumentModel;
 
@@ -5,7 +6,8 @@ namespace SlackJobPosterReceiver.Database
 {
     public interface IDBFacade
     {
-         Task AddLeadToDB(string message_ts, string header, string leadId = null);
-         Task<Document> GetLeadFromDB(string message_ts);
+        Task AddToDB(Dictionary<string, string> parameters);
+        Task<Document> GetFromDB(string key);
+        Task<List<Document>> GetAllFromDB(string key);
     }
 }

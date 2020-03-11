@@ -17,13 +17,15 @@ namespace SlackJobPosterReceiver
     public class Utility
     {
         private readonly HttpClient _client;
-        private readonly IDBFacade _db;
+        private readonly IDBFacade _dbLeads;
+        private readonly IDBFacade _dbSkills;
         private readonly SlackPoster _slackApi;
         private readonly ClosePoster _closeApi;
 
-        public Utility(IDBFacade db, HttpClient client = null)
+        public Utility(IDBFacade dbLeads, IDBFacade dbSkills, HttpClient client = null)
         {
-            _db = db;
+            _dbLeads = dbLeads;
+            _dbSkills = dbSkills;
             _client = client ?? new HttpClient();
             _slackApi = new SlackPoster(_client);
             _closeApi = new ClosePoster(_client);
@@ -41,50 +43,81 @@ namespace SlackJobPosterReceiver
         {
             if (payload.GetValue("type").Value<string>() == "block_actions")
             {
-                string msgTs = payload.SelectToken("container.message_ts").Value<string>();
-                // quering with JsonPath queries for easier identification of the elements when in array
-                string msgHeader = payload.SelectToken("$..blocks[?(@.block_id=='msg_header')].text.text").Value<string>();
-                string hookUrl = payload.SelectToken("response_url").Value<string>();
-
-                switch (payload.SelectToken("actions[0].action_id").Value<string>())
+                if (payload.SelectToken("container.type").Value<string>() == "message")
                 {
-                    case "qualifyLead_btn":
-                        string triggerId = payload.GetValue("trigger_id").Value<string>();
-                        await QualifyLead(msgTs, msgHeader, hookUrl, triggerId);
-                        break;
-                    case "addToClose_btn":
-                        string optionValue = payload.SelectToken("$...elements[?(@.action_id=='customer_select')].initial_option.value").Value<string>();
-                        await AddToClose(msgTs, msgHeader, hookUrl, optionValue);
-                        break;
-                    case "customer_select":
-                        string customerName = payload.SelectToken("actions[0].selected_option.text.text").Value<string>();
-                        string leadId = payload.SelectToken("actions[0].selected_option.value").Value<string>();
-                        await CustomerSelected(msgTs, msgHeader, hookUrl, customerName, leadId);
-                        break;
+                    string msgTs = payload.SelectToken("container.message_ts").Value<string>();
+                    // quering with JsonPath queries for easier identification of the elements when in array
+                    string msgHeader = payload.SelectToken("$..blocks[?(@.block_id=='msg_header')].text.text").Value<string>();
+                    string hookUrl = payload.SelectToken("response_url").Value<string>();
+
+                    switch (payload.SelectToken("actions[0].action_id").Value<string>())
+                    {
+                        case "qualifyLead_btn":
+                            string triggerId = payload.GetValue("trigger_id").Value<string>();
+                            await QualifyLead(msgTs, msgHeader, hookUrl, triggerId);
+                            break;
+                        case "addToClose_btn":
+                            string optionValue = payload.SelectToken("$...elements[?(@.action_id=='customer_select')].initial_option.value").Value<string>();
+                            await AddToClose(msgTs, msgHeader, hookUrl, optionValue);
+                            break;
+                        case "customer_select":
+                            string customerName = payload.SelectToken("actions[0].selected_option.text.text").Value<string>();
+                            string leadId = payload.SelectToken("actions[0].selected_option.value").Value<string>();
+                            await CustomerSelected(msgTs, msgHeader, hookUrl, customerName, leadId);
+                            break;
+                    }
+                }
+                else if (payload.SelectToken("container.type").Value<string>() == "view")
+                {
+                    switch (payload.SelectToken("actions[0].action_id").Value<string>())
+                    {
+                        case "addSkills_btn":
+                            string triggerId = payload.GetValue("trigger_id").Value<string>();
+                            await AddSkill(triggerId);
+                            break;
+                    }
                 }
             }
             else if (payload.GetValue("type").Value<string>() == "view_submission")
             {
-                string msgTs = payload.SelectToken("view.callback_id").Value<string>();
-                string hookUrl = payload.SelectToken("view.private_metadata").Value<string>();
-                string leadName = payload.SelectToken("view.state.values.customer_block.customer_name.value").Value<string>();
+                string callbackId = payload.SelectToken("view.callback_id").Value<string>();
 
-                await ViewSubmitted(msgTs, hookUrl, leadName);
+                switch (callbackId)
+                {
+                    case "addSkill_view":
+                        string skillName = payload.SelectToken("view.state.values.addSkill_block.skill_name.value").Value<string>();
+                        string userId = payload.SelectToken("user.id").Value<string>();
+
+                        await AddSkillViewSubmitted(skillName, userId);
+                        break;
+                    default:
+                        string hookUrl = payload.SelectToken("view.private_metadata").Value<string>();
+                        string leadName = payload.SelectToken("view.state.values.customer_block.customer_name.value").Value<string>();
+
+                        await QualifyLeadViewSubmitted(callbackId, hookUrl, leadName);
+                        break;
+                }
             }
         }
 
         private async Task QualifyLead(string msgTs, string msgHeader, string hookUrl, string triggerId)
         {
-            string view = SlackHelper.GetModal(msgTs, hookUrl);
+            string view = SlackHelper.GetQualificationModal(msgTs, hookUrl);
 
             await _slackApi.TriggerModalOpen(GlobalVars.SLACK_TOKEN, triggerId, view);
 
-            await _db.AddLeadToDB(msgTs, msgHeader);
+            Dictionary<string, string> parameters = new Dictionary<string, string>
+            {
+                { "message_ts", msgTs },
+                { "message_text", msgHeader }
+            };
+
+            await _dbLeads.AddToDB(parameters);
         }
 
         private async Task AddToClose(string msgTs, string msgHeader, string hookUrl, string optionValue)
         {
-            Document leadDoc = await _db.GetLeadFromDB(msgTs);
+            Document leadDoc = await _dbLeads.GetFromDB(msgTs);
             string lead_id;
 
             if (!(leadDoc is null))
@@ -102,8 +135,16 @@ namespace SlackJobPosterReceiver
 
         private async Task CustomerSelected(string msgTs, string msgHeader, string hookUrl, string customerName, string leadId)
         {
+            //build document to be persisted in DB
+            Dictionary<string, string> parameters = new Dictionary<string, string>
+            {
+                { "message_ts", msgTs },
+                { "message_text", msgHeader },
+                { "lead_id", leadId }
+            };
+
             // persist select choice on DB for each message
-            await _db.AddLeadToDB(msgTs, msgHeader, leadId);
+            await _dbLeads.AddToDB(parameters);
             Option selected = new Option(customerName, leadId);
 
             //post updated message to Slack which will remove the buttons
@@ -115,9 +156,9 @@ namespace SlackJobPosterReceiver
             await _slackApi.UpdateMessage(updatedMsg, hookUrl);
         }
 
-        private async Task ViewSubmitted(string msgTs, string hookUrl, string leadName)
+        private async Task QualifyLeadViewSubmitted(string msgTs, string hookUrl, string leadName)
         {
-            Document document = await _db.GetLeadFromDB(msgTs);
+            Document document = await _dbLeads.GetFromDB(msgTs);
             string msgHeader = document["message_text"].ToString();
 
             //post lead to Close 
@@ -131,7 +172,47 @@ namespace SlackJobPosterReceiver
             JObject updatedMsg = SlackHelper.BuildDefaultSlackPayload(msgHeader, null, SlackPostState.FINAL, leadId);
             await _slackApi.UpdateMessage(updatedMsg, hookUrl);
 
-            await _db.AddLeadToDB(msgTs, msgHeader, leadId);
+            //build document to be persisted in DB
+            Dictionary<string, string> parameters = new Dictionary<string, string>
+            {
+                { "message_ts", msgTs },
+                { "message_text", msgHeader },
+                { "lead_id", leadId }
+            };
+
+            await _dbLeads.AddToDB(parameters);
+        }
+
+        private async Task AddSkill(string triggerId)
+        {
+            string view = SlackHelper.GetAddSkillModal();
+
+            await _slackApi.TriggerModalOpen(GlobalVars.SLACK_TOKEN, triggerId, view);
+        }
+
+        private async Task AddSkillViewSubmitted(string skillName, string userId)
+        {
+            List<string> skilloptions = new List<string>();
+            List<Document> skillDocuments = await _dbSkills.GetAllFromDB("skill_name");
+
+            foreach (Document doc in skillDocuments)
+                skilloptions.Add(doc["skill_name"]);
+
+            //adding the new skill to Home page
+            skilloptions.Add(skillName);
+
+            //post updated view to Slack Home page
+            JObject updatedMsg = SlackHelper.BuildDefaultSlackHome(userId, skilloptions);
+            GlobalVars.CONTEXT.Logger.LogLine(updatedMsg.ToString());
+            await _slackApi.UpdateHomePage(updatedMsg);
+
+            //build document to be persisted in DB
+            Dictionary<string, string> parameters = new Dictionary<string, string>
+            {
+                { "skill_name", skillName }
+            };
+
+            await _dbSkills.AddToDB(parameters);
         }
 
         private static NameValueCollection GetParameterCollection(string queryString)
@@ -173,7 +254,7 @@ namespace SlackJobPosterReceiver
             Dictionary<string, Option> customers = new Dictionary<string, Option>();
             JObject leads = await _closeApi.GetLeads();
 
-            foreach(JObject lead in leads.SelectToken("data").Value<JArray>())
+            foreach (JObject lead in leads.SelectToken("data").Value<JArray>())
             {
                 customers.Add(lead["display_name"].Value<string>(), new Option(lead["display_name"].Value<string>(), lead["id"].Value<string>()));
             }

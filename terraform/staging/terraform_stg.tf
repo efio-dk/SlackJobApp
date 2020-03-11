@@ -14,6 +14,10 @@ data "aws_ssm_parameter" "slackleads-table" {
   name = "TABLE_SLACK_LEADS" # our SSM parameter's name
 }
 
+data "aws_ssm_parameter" "slackskills-table" {
+  name = "AWS_TABLE_SLACK_SKILLS" # our SSM parameter's name
+}
+
 data "aws_ssm_parameter" "slack-token" {
   name = "SLACK_TOKEN" # our SSM parameter's name
 }
@@ -73,6 +77,7 @@ resource "aws_lambda_function" "stg-SlackJobPosterReceiver-lambda" {
   environment {
     variables = {
       AWS_TABLE_SLACK_LEADS    = data.aws_ssm_parameter.slackleads-table.value
+      AWS_TABLE_SLACK_SKILLS   = data.aws_ssm_parameter.slackskills-table.value
       SLACK_TOKEN              = data.aws_ssm_parameter.slack-token.value
       CLOSE_TOKEN              = data.aws_ssm_parameter.close-token.value
       SLACK_VERIFICATION_TOKEN = data.aws_ssm_parameter.slack-verification-token.value
@@ -129,6 +134,23 @@ resource "aws_dynamodb_table" "stg-slack-leads-table" {
 
   tags = {
     Name        = "stg-slack-leads-table"
+    Environment = "staging"
+  }
+}
+
+resource "aws_dynamodb_table" "stg-slack-skills-table" {
+  name           = "stg_JobSkillsFilter"
+  hash_key       = "skill_name"
+  read_capacity  = 5
+  write_capacity = 5
+
+  attribute {
+    name = "skill_name"
+    type = "S"
+  }
+
+  tags = {
+    Name        = "stg-slack-skills-table"
     Environment = "staging"
   }
 }

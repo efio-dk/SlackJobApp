@@ -42,6 +42,9 @@ Resources:
         - Name: AWS_TABLE_SLACK_LEADS
           Type: PARAMETER_STORE
           Value: "TABLE_SLACK_LEADS"
+        - Name: AWS_TABLE_SLACK_SKILLS
+          Type: PARAMETER_STORE
+          Value: "TABLE_SLACK_SKILLS"
         - Name: SLACK_TOKEN
           Type: PARAMETER_STORE
           Value: "SLACK_TOKEN"
@@ -92,6 +95,9 @@ Resources:
         - Name: AWS_TABLE_SLACK_LEADS
           Type: PARAMETER_STORE
           Value: "TABLE_SLACK_LEADS"
+        - Name: AWS_TABLE_SLACK_SKILLS
+          Type: PARAMETER_STORE
+          Value: "TABLE_SLACK_SKILLS"
         - Name: SLACK_TOKEN
           Type: PARAMETER_STORE
           Value: "SLACK_TOKEN"
@@ -170,6 +176,9 @@ Resources:
         - Name: AWS_TABLE_SLACK_LEADS
           Type: PARAMETER_STORE
           Value: "TABLE_SLACK_LEADS"
+        - Name: AWS_TABLE_SLACK_SKILLS
+          Type: PARAMETER_STORE
+          Value: "TABLE_SLACK_SKILLS"
         - Name: SLACK_TOKEN
           Type: PARAMETER_STORE
           Value: "SLACK_TOKEN"

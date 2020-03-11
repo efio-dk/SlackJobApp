@@ -14,6 +14,10 @@ data "aws_ssm_parameter" "slackleads-table" {
   name = "TABLE_SLACK_LEADS" # our SSM parameter's name
 }
 
+data "aws_ssm_parameter" "slackskills-table" {
+  name = "AWS_TABLE_SLACK_SKILLS" # our SSM parameter's name
+}
+
 data "aws_ssm_parameter" "slack-token" {
   name = "SLACK_TOKEN" # our SSM parameter's name
 }
@@ -42,6 +46,12 @@ resource "aws_lambda_function" "prod-SlackJobPoster-lambda" {
     Name        = "prod-SlackJobPoster"
     Environment = "production"
   }
+
+  environment {
+    variables = {
+      CLOSE_TOKEN = data.aws_ssm_parameter.close-token.value
+    }
+  }
 }
 
 resource "aws_lambda_event_source_mapping" "prod-incoming-sqs" {
@@ -66,9 +76,10 @@ resource "aws_lambda_function" "prod-SlackJobPosterReceiver-lambda" {
 
   environment {
     variables = {
-      AWS_TABLE_SLACK_LEADS = data.aws_ssm_parameter.slackleads-table.value
-      SLACK_TOKEN           = data.aws_ssm_parameter.slack-token.value
-      CLOSE_TOKEN           = data.aws_ssm_parameter.close-token.value
+      AWS_TABLE_SLACK_LEADS    = data.aws_ssm_parameter.slackleads-table.value
+      AWS_TABLE_SLACK_SKILLS   = data.aws_ssm_parameter.slackskills-table.value
+      SLACK_TOKEN              = data.aws_ssm_parameter.slack-token.value
+      CLOSE_TOKEN              = data.aws_ssm_parameter.close-token.value
       SLACK_VERIFICATION_TOKEN = data.aws_ssm_parameter.slack-verification-token.value
     }
   }
@@ -123,6 +134,23 @@ resource "aws_dynamodb_table" "prod-slack-leads-table" {
 
   tags = {
     Name        = "prod-slack-leads-table"
+    Environment = "production"
+  }
+}
+
+resource "aws_dynamodb_table" "prod-slack-skills-table" {
+  name           = "prod_JobSkillsFilter"
+  hash_key       = "skill_name"
+  read_capacity  = 5
+  write_capacity = 5
+
+  attribute {
+    name = "skill_name"
+    type = "S"
+  }
+
+  tags = {
+    Name        = "prod-slack-skills-table"
     Environment = "production"
   }
 }

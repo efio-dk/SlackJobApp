@@ -18,7 +18,7 @@ namespace SlackJobPosterReceiver
 
         public Function()
         {
-            _utils = new Utility(new AWSDB(GlobalVars.SLACKLEADS_TABLE), new HttpClient());
+            _utils = new Utility(new AWSDB(GlobalVars.SLACKLEADS_TABLE), new AWSDB(GlobalVars.SLACKSKILLS_TABLE), new HttpClient());
         }
 
         public async Task<APIGatewayProxyResponse> Get(APIGatewayProxyRequest request, ILambdaContext context)
