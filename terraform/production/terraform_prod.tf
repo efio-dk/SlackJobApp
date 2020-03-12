@@ -50,6 +50,7 @@ resource "aws_lambda_function" "prod-SlackJobPoster-lambda" {
   environment {
     variables = {
       CLOSE_TOKEN = data.aws_ssm_parameter.close-token.value
+      AWS_TABLE_SLACK_SKILLS   = data.aws_ssm_parameter.slackskills-table.value
     }
   }
 }

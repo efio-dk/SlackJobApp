@@ -12,6 +12,10 @@ using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using SlackMessageBuilder;
 using static SlackMessageBuilder.Button;
+using Newtonsoft.Json;
+using SlackJobPoster.Database;
+using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DocumentModel;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -20,12 +24,16 @@ namespace SlackJobPoster
 {
     public class Function
     {
-        private readonly HttpClient client;
-        private string webhook_url;
+        private readonly HttpClient _client;
+        private string _webhook_url;
+        private readonly IDBFacade _db;
+        private static readonly AmazonDynamoDBClient _dbClient = new AmazonDynamoDBClient();
+        private readonly Table _skillsTable = Table.LoadTable(_dbClient, GlobalVars.SLACKSKILLS_TABLE);
 
         public Function()
         {
-            client = new HttpClient();
+            _client = new HttpClient();
+            _db = new AWSDB();
         }
 
         public async Task FunctionHandler(SQSEvent evnt, ILambdaContext context)
@@ -39,16 +47,19 @@ namespace SlackJobPoster
         private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context)
         {
             SecretManager sm = new SecretManager();
-            webhook_url = sm.Get("SLACK_WEBHOOK");
+            _webhook_url = sm.Get("SLACK_WEBHOOK");
 
             JObject jobPost = JObject.Parse(message.Body);
             string jobPostHeader = jobPost.Value<string>("header");
             string jobPostUrl = jobPost.Value<string>("sourceId");
             string jobPostCustomer = jobPost.Value<string>("customer");
+            List<string> jobPostKeywords = jobPost.Value<JArray>("keywords").ToObject<List<string>>();
 
-            JObject jsonObject = await BuildSlackPayload(jobPostHeader, jobPostUrl, jobPostCustomer);
-
-            await client.PostAsJsonAsync(webhook_url, jsonObject);
+            if (await SkillFilterExists(jobPostKeywords))
+            {
+                JObject jsonObject = await BuildSlackPayload(jobPostHeader, jobPostUrl, jobPostCustomer);
+                await _client.PostAsJsonAsync(_webhook_url, jsonObject);
+            }
 
             await Task.CompletedTask;
         }
@@ -82,6 +93,17 @@ namespace SlackJobPoster
             return builder.GetJObject();
         }
 
+        private async Task<bool> SkillFilterExists(List<string> skills)
+        {
+            foreach (string skill in skills)
+            {
+                if (await _db.ItemExists(skill, _skillsTable))
+                    return true;
+            }
+
+            return false;
+        }
+
         public async Task<Dictionary<string, Option>> GetListOfCustomers()
         {
             Dictionary<string, Option> customers = new Dictionary<string, Option>();
@@ -97,7 +119,7 @@ namespace SlackJobPoster
 
         private async Task<JObject> GetLeads()
         {
-            HttpResponseMessage response = await client.GetAsJsonAsync("https://api.close.com/api/v1/lead/", Environment.GetEnvironmentVariable("CLOSE_TOKEN"));
+            HttpResponseMessage response = await _client.GetAsJsonAsync("https://api.close.com/api/v1/lead/", Environment.GetEnvironmentVariable("CLOSE_TOKEN"));
 
             JObject responseJObj = await response.Content.ReadAsJsonAsync<JObject>();
 
