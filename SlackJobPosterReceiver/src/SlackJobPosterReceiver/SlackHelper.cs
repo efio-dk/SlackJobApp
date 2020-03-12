@@ -73,23 +73,26 @@ namespace SlackJobPosterReceiver
             homeView.AddBlock(new Section(new Text(" ")));
             homeView.AddBlock(new Section(new Text(" ")));
 
-            Section fields = new Section();
-            List<Option> options = new List<Option>();
-
-            foreach (string option in skilloptions)
+            if (skilloptions.Count > 0)
             {
-                fields.AddField(option);
-                options.Add(new Option(option, option));
+                Section fields = new Section();
+                List<Option> options = new List<Option>();
+
+                foreach (string option in skilloptions)
+                {
+                    fields.AddField(option);
+                    options.Add(new Option(option, option));
+                }
+
+                //add fields array
+                homeView.AddBlock(fields);
+
+                homeView.AddBlock(new Divider());
+
+                Section multiStaticSelect = new Section(new Text("Pick one or more skills to be removed"));
+                multiStaticSelect.AddAccessory(new MultiLineSelect(options, "deleteSkills_select", "Select items"));
+                homeView.AddBlock(multiStaticSelect);
             }
-
-            //add fields array
-            homeView.AddBlock(fields);
-
-            homeView.AddBlock(new Divider());
-
-            Section multiStaticSelect = new Section(new Text("Pick one or more skills to be removed"));
-            multiStaticSelect.AddAccessory(new MultiLineSelect(options, "deleteSkills_select", "Select items"));
-            homeView.AddBlock(multiStaticSelect);
 
             homeView.AddBlock(new SlackAction("home_actions").AddElement(new Button("addSkills_btn", "Add skills", ButtonStyle.PRIMARY)));
 

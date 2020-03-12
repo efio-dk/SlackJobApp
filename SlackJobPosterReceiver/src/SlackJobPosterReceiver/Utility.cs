@@ -208,7 +208,6 @@ namespace SlackJobPosterReceiver
 
             //post updated view to Slack Home page
             JObject updatedMsg = SlackHelper.BuildDefaultSlackHome(userId, skilloptions);
-            GlobalVars.CONTEXT.Logger.LogLine(updatedMsg.ToString());
             await _slackApi.UpdateHomePage(updatedMsg);
 
             //build document to be persisted in DB
@@ -234,7 +233,7 @@ namespace SlackJobPosterReceiver
             {
                 if (!skilloptions.Contains(skillDoc["skill_name"]))
                 {
-                    newOptions.Add(skillDoc);
+                    newOptions.Add(skillDoc["skill_name"]);
                 }
             }
 

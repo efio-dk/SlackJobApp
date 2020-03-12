@@ -29,7 +29,6 @@ namespace SlackJobPosterReceiver.API
         public async Task<JObject> PostOpportunity(string msgHeader, string leadId, string opportunityStatusName)
         {
             string statusId = await GetStatusId(opportunityStatusName);
-            GlobalVars.CONTEXT.Logger.LogLine(statusId);
 
             JObject opportunityObj = new JObject
             {
@@ -50,10 +49,7 @@ namespace SlackJobPosterReceiver.API
         {
             HttpResponseMessage response = await _client.GetAsJsonAsync("https://api.close.com/api/v1/status/opportunity/", GlobalVars.CLOSE_TOKEN);
 
-            GlobalVars.CONTEXT.Logger.LogLine(response.Content.ToString());
             JObject responseJObj = await response.Content.ReadAsJsonAsync<JObject>();
-
-            GlobalVars.CONTEXT.Logger.LogLine(responseJObj.ToString());
 
             string statusId = (string)responseJObj.SelectToken($"$..data[?(@.label=='{statusName}')].id");
 

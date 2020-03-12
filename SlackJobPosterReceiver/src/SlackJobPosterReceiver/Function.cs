@@ -55,7 +55,6 @@ namespace SlackJobPosterReceiver
 
             //consume request from Slack actions
             JObject payload = Utility.GetBodyJObject(request.Body);
-            context.Logger.LogLine(payload.ToString());
 
             //depending on the payload, perform needed action
             await _utils.PayloadRouter(payload);
