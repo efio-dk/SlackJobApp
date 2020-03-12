@@ -9,5 +9,6 @@ namespace SlackJobPosterReceiver.Database
         Task AddToDB(Dictionary<string, string> parameters);
         Task<Document> GetFromDB(string key);
         Task<List<Document>> GetAllFromDB(string key);
+        Task DeleteFromDB(Document document);
     }
 }

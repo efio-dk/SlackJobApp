@@ -88,7 +88,7 @@ namespace SlackJobPosterReceiver
             homeView.AddBlock(new Divider());
 
             Section multiStaticSelect = new Section(new Text("Pick one or more skills to be removed"));
-            multiStaticSelect.AddAccessory(new MultiLineSelect(options, "Select items"));
+            multiStaticSelect.AddAccessory(new MultiLineSelect(options, "deleteSkills_select", "Select items"));
             homeView.AddBlock(multiStaticSelect);
 
             homeView.AddBlock(new SlackAction("home_actions").AddElement(new Button("addSkills_btn", "Add skills", ButtonStyle.PRIMARY)));

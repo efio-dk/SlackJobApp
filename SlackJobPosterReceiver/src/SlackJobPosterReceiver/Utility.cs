@@ -75,6 +75,11 @@ namespace SlackJobPosterReceiver
                             string triggerId = payload.GetValue("trigger_id").Value<string>();
                             await AddSkill(triggerId);
                             break;
+                        case "deleteSkills_select":
+                            JArray selectedOptions = payload.SelectToken("actions[0].selected_options").Value<JArray>();
+                            string userId = payload.SelectToken("user.id").Value<string>();
+                            await DeleteSkill(selectedOptions, userId);
+                            break;
                     }
                 }
             }
@@ -213,6 +218,38 @@ namespace SlackJobPosterReceiver
             };
 
             await _dbSkills.AddToDB(parameters);
+        }
+
+        private async Task DeleteSkill(JArray selectedSkills, string userId)
+        {
+            List<Document> skillDocuments = await _dbSkills.GetAllFromDB("skill_name");
+            List<string> skilloptions = new List<string>();
+            List<string> newOptions = new List<string>();
+
+            foreach(JObject skill in selectedSkills)
+                skilloptions.Add(skill.SelectToken("value").Value<string>());
+
+            //remove skills that were specified
+            foreach(Document skillDoc in skillDocuments)
+            {
+                if (!skilloptions.Contains(skillDoc["skill_name"]))
+                {
+                    newOptions.Add(skillDoc);
+                }
+            }
+
+            //post updated view to Slack Home page
+            JObject updatedMsg = SlackHelper.BuildDefaultSlackHome(userId, newOptions);
+            await _slackApi.UpdateHomePage(updatedMsg);
+
+            //delete from DB
+            foreach(Document skillDoc in skillDocuments)
+            {
+                if (skilloptions.Contains(skillDoc["skill_name"]))
+                {
+                    await _dbSkills.DeleteFromDB(skillDoc);
+                }
+            }
         }
 
         private static NameValueCollection GetParameterCollection(string queryString)

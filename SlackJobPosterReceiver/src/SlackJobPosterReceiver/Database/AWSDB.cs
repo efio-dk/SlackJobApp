@@ -51,5 +51,10 @@ namespace SlackJobPosterReceiver.Database
 
             return result;
         }
+
+        public async Task DeleteFromDB(Document document)
+        {
+            await _db.DeleteItemAsync(document);
+        }
     }
 }
