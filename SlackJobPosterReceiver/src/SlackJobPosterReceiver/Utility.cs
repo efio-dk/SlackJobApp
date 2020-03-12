@@ -197,11 +197,13 @@ namespace SlackJobPosterReceiver
 
         private async Task AddSkillViewSubmitted(string skillName, string userId)
         {
+            string lowerSkillName = skillName.ToLower();
+
             List<string> skilloptions = new List<string>();
             List<Document> skillDocuments = await _dbSkills.GetAllFromDB("skill_name");
 
             foreach (Document doc in skillDocuments)
-                skilloptions.Add(doc["skill_name"]);
+                skilloptions.Add(doc["skill_display_name"]);
 
             //adding the new skill to Home page
             skilloptions.Add(skillName);
@@ -213,7 +215,8 @@ namespace SlackJobPosterReceiver
             //build document to be persisted in DB
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
-                { "skill_name", skillName }
+                { "skill_name", lowerSkillName },
+                { "skill_display_name", skillName }
             };
 
             await _dbSkills.AddToDB(parameters);
@@ -226,14 +229,14 @@ namespace SlackJobPosterReceiver
             List<string> newOptions = new List<string>();
 
             foreach(JObject skill in selectedSkills)
-                skilloptions.Add(skill.SelectToken("value").Value<string>());
+                skilloptions.Add(skill.SelectToken("value").Value<string>().ToLower());
 
             //remove skills that were specified
             foreach(Document skillDoc in skillDocuments)
             {
                 if (!skilloptions.Contains(skillDoc["skill_name"]))
                 {
-                    newOptions.Add(skillDoc["skill_name"]);
+                    newOptions.Add(skillDoc["skill_display_name"]);
                 }
             }
 

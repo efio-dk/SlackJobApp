@@ -97,7 +97,7 @@ namespace SlackJobPoster
         {
             foreach (string skill in skills)
             {
-                if (await _db.ItemExists(skill, _skillsTable))
+                if (await _db.ItemExists(skill.ToLower(), _skillsTable))
                     return true;
             }
 
