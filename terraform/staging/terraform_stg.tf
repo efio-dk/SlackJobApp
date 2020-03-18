@@ -86,6 +86,17 @@ resource "aws_lambda_function" "stg-SlackJobPosterReceiver-lambda" {
   }
 }
 
+# Cloudwatch
+resource "aws_cloudwatch_event_rule" "stg-SlackJobPosterReceiver-rule" {
+  name        = "stg-SlackJobPosterReceiver-warmer"
+  schedule_expression = rate(5 minutes)
+}
+
+resource "aws_cloudwatch_event_target" "stg-SlackJobPosterReceiver-target" {
+  rule      = aws_cloudwatch_event_rule.stg-SlackJobPosterReceiver-rule.name
+  arn       = aws_lambda_function.stg-SlackJobPosterReceiver-lambda.arn
+}
+
 
 # API Gateway
 resource "aws_api_gateway_rest_api" "slack-app-api" {
