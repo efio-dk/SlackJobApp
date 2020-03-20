@@ -41,7 +41,7 @@ namespace SlackJobPosterReceiver
 
         public async Task PayloadRouter(JObject payload)
         {
-            if (payload.GetValue("type").Value<string>() == "block_actions")
+            if (payload.GetValue("type").Value<string>() == "block_actions" && !(payload.SelectToken("container.type") is null))
             {
                 if (payload.SelectToken("container.type").Value<string>() == "message")
                 {
@@ -102,6 +102,25 @@ namespace SlackJobPosterReceiver
                         await QualifyLeadViewSubmitted(callbackId, hookUrl, leadName);
                         break;
                 }
+            }
+        }
+
+        internal async Task EventPayloadRouter(JObject eventPayload)
+        {
+            switch (eventPayload.SelectToken("type").Value<string>())
+            {
+                case "app_home_opened":
+
+                    List<string> skilloptions = new List<string>();
+                    List<Document> skillDocuments = await _dbSkills.GetAllFromDB("skill_name");
+
+                    foreach (Document doc in skillDocuments)
+                        skilloptions.Add(doc["skill_display_name"]);
+
+                    //post updated view to Slack Home page
+                    JObject updatedMsg = SlackHelper.BuildDefaultSlackHome(eventPayload.SelectToken("user").Value<string>(), skilloptions);
+                    await _slackApi.UpdateHomePage(updatedMsg);
+                    break;
             }
         }
 
@@ -228,11 +247,11 @@ namespace SlackJobPosterReceiver
             List<string> skilloptions = new List<string>();
             List<string> newOptions = new List<string>();
 
-            foreach(JObject skill in selectedSkills)
+            foreach (JObject skill in selectedSkills)
                 skilloptions.Add(skill.SelectToken("value").Value<string>().ToLower());
 
             //remove skills that were specified
-            foreach(Document skillDoc in skillDocuments)
+            foreach (Document skillDoc in skillDocuments)
             {
                 if (!skilloptions.Contains(skillDoc["skill_name"]))
                 {
@@ -245,7 +264,7 @@ namespace SlackJobPosterReceiver
             await _slackApi.UpdateHomePage(updatedMsg);
 
             //delete from DB
-            foreach(Document skillDoc in skillDocuments)
+            foreach (Document skillDoc in skillDocuments)
             {
                 if (skilloptions.Contains(skillDoc["skill_name"]))
                 {

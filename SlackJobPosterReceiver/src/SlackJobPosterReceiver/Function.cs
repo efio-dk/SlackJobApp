@@ -6,6 +6,8 @@ using Amazon.Lambda.APIGatewayEvents;
 using Newtonsoft.Json.Linq;
 using System.Net.Http;
 using SlackJobPosterReceiver.Database;
+using System.Collections.Generic;
+using System;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -16,9 +18,14 @@ namespace SlackJobPosterReceiver
     {
         private readonly Utility _utils;
 
-        public Function()
+        public Function(IDBFacade leadsDB, IDBFacade skillsDB)
         {
-            _utils = new Utility(new AWSDB(GlobalVars.SLACKLEADS_TABLE), new AWSDB(GlobalVars.SLACKSKILLS_TABLE), new HttpClient());
+            if (leadsDB is null)
+                leadsDB = new AWSDB(GlobalVars.SLACKLEADS_TABLE);
+            if (skillsDB is null)
+                skillsDB = new AWSDB(GlobalVars.SLACKSKILLS_TABLE);
+
+            _utils = new Utility(leadsDB, skillsDB, new HttpClient());
         }
 
         public async Task<APIGatewayProxyResponse> Get(APIGatewayProxyRequest request, ILambdaContext context)
@@ -53,19 +60,64 @@ namespace SlackJobPosterReceiver
                 return invalidResponse;
             }
 
-            //consume request from Slack actions
-            JObject payload = Utility.GetBodyJObject(request.Body);
-
-            //depending on the payload, perform needed action
-            await _utils.PayloadRouter(payload);
-
-            // TODO: refactor for more reliability
-            var response = new APIGatewayProxyResponse
+            APIGatewayProxyResponse response;
+            // event subscriptions for Slack app
+            JObject eventPayload;
+            try
             {
-                StatusCode = (int)HttpStatusCode.OK
-            };
+                eventPayload = JObject.Parse(request.Body);
+            }
+            catch
+            {
+                eventPayload = new JObject();
+            }
 
-            context.Logger.LogLine("Finished processing");
+            if (string.IsNullOrEmpty((string)eventPayload.SelectToken("challenge")) && eventPayload.SelectToken("event") is null)
+            {
+                //consume request from Slack actions
+                JObject payload = Utility.GetBodyJObject(request.Body);
+
+                //depending on the payload, perform needed action
+                await _utils.PayloadRouter(payload);
+
+                // TODO: refactor for more reliability
+                response = new APIGatewayProxyResponse
+                {
+                    StatusCode = (int)HttpStatusCode.OK
+                };
+
+                context.Logger.LogLine("Finished processing");
+            }
+            else if (!(eventPayload.SelectToken("event") is null))
+            {
+                await _utils.EventPayloadRouter(eventPayload.SelectToken("event").Value<JObject>());
+                string body = "";
+
+                if (!string.IsNullOrEmpty((string)eventPayload.SelectToken("challenge")))
+                    body = eventPayload.SelectToken("challenge").Value<string>();
+
+                response = new APIGatewayProxyResponse
+                {
+                    StatusCode = (int)HttpStatusCode.OK,
+                    Body = body,
+                    Headers = new Dictionary<string, string>()
+                    {
+                        {"Content-type", "text/plain"}
+                    }
+                };
+            }
+            else
+            {
+                response = new APIGatewayProxyResponse
+                {
+                    StatusCode = (int)HttpStatusCode.OK,
+                    Body = eventPayload.SelectToken("challenge").Value<string>(),
+                    Headers = new Dictionary<string, string>()
+                    {
+                        {"Content-type", "text/plain"}
+                    }
+                };
+            }
 
             return response;
         }

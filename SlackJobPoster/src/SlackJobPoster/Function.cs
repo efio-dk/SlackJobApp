@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using SlackJobPoster.Database;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DocumentModel;
+using SlackJobPoster.API;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -26,25 +27,28 @@ namespace SlackJobPoster
     {
         private readonly HttpClient _client;
         private string _webhook_url;
-        private readonly IDBFacade _db;
-        private static readonly AmazonDynamoDBClient _dbClient = new AmazonDynamoDBClient();
-        private readonly Table _skillsTable = Table.LoadTable(_dbClient, GlobalVars.SLACKSKILLS_TABLE);
+        private readonly ICloseClient _closeApi;
 
         public Function()
         {
             _client = new HttpClient();
-            _db = new AWSDB();
+            _closeApi = new CloseClient(_client);
         }
 
         public async Task FunctionHandler(SQSEvent evnt, ILambdaContext context)
         {
+            AmazonDynamoDBClient dbClient = new AmazonDynamoDBClient();
+            Table skillsTable = Table.LoadTable(dbClient, GlobalVars.SLACKSKILLS_TABLE);
+
+            IDBFacade db = new AWSDB();
+
             foreach (var message in evnt.Records)
             {
-                await ProcessMessageAsync(message, context);
+                await ProcessMessageAsync(message, skillsTable, db, context);
             }
         }
 
-        private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context)
+        private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, Table skillsTable, IDBFacade db, ILambdaContext context)
         {
             SecretManager sm = new SecretManager();
             _webhook_url = sm.Get("SLACK_WEBHOOK");
@@ -55,18 +59,18 @@ namespace SlackJobPoster
             string jobPostCustomer = jobPost.Value<string>("customer");
             List<string> jobPostKeywords = jobPost.Value<JArray>("keywords").ToObject<List<string>>();
 
-            if (await SkillFilterExists(jobPostKeywords))
+            if (await SkillFilterExists(jobPostKeywords, skillsTable, db))
             {
-                JObject jsonObject = await BuildSlackPayload(jobPostHeader, jobPostUrl, jobPostCustomer);
+                JObject jsonObject = await BuildSlackPayload(jobPostHeader, jobPostUrl, _closeApi, jobPostCustomer);
                 await _client.PostAsJsonAsync(_webhook_url, jsonObject);
             }
 
             await Task.CompletedTask;
         }
 
-        public async Task<JObject> BuildSlackPayload(string header, string sourceId, string jobPostCustomer = null)
+        public async Task<JObject> BuildSlackPayload(string header, string sourceId, ICloseClient closeApi, string jobPostCustomer = null)
         {
-            Dictionary<string, Option> customers = await GetListOfCustomers();
+            Dictionary<string, Option> customers = await closeApi.GetListOfCustomers();
 
             BlocksBuilder builder = new BlocksBuilder();
             StaticSelect customerSelect = new StaticSelect("customer_select", customers.Values.ToList(), "Customer");
@@ -93,37 +97,15 @@ namespace SlackJobPoster
             return builder.GetJObject();
         }
 
-        private async Task<bool> SkillFilterExists(List<string> skills)
+        public async Task<bool> SkillFilterExists(List<string> skills, Table skillsTable, IDBFacade db)
         {
             foreach (string skill in skills)
             {
-                if (await _db.ItemExists(skill.ToLower(), _skillsTable))
+                if (await db.ItemExists(skill.ToLower(), skillsTable))
                     return true;
             }
 
             return false;
-        }
-
-        public async Task<Dictionary<string, Option>> GetListOfCustomers()
-        {
-            Dictionary<string, Option> customers = new Dictionary<string, Option>();
-            JObject leads = await GetLeads();
-
-            foreach (JObject lead in leads.SelectToken("data").Value<JArray>())
-            {
-                customers.Add(lead["display_name"].Value<string>(), new Option(lead["display_name"].Value<string>(), lead["id"].Value<string>()));
-            }
-
-            return customers;
-        }
-
-        private async Task<JObject> GetLeads()
-        {
-            HttpResponseMessage response = await _client.GetAsJsonAsync("https://api.close.com/api/v1/lead/", Environment.GetEnvironmentVariable("CLOSE_TOKEN"));
-
-            JObject responseJObj = await response.Content.ReadAsJsonAsync<JObject>();
-
-            return responseJObj;
         }
     }
 }
