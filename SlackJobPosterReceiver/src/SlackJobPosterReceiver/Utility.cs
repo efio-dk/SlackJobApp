@@ -105,7 +105,7 @@ namespace SlackJobPosterReceiver
             }
         }
 
-        internal async Task EventPayloadRouter(JObject eventPayload)
+        public async Task EventPayloadRouter(JObject eventPayload)
         {
             switch (eventPayload.SelectToken("type").Value<string>())
             {

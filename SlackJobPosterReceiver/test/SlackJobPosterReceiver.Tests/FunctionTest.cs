@@ -747,7 +747,7 @@ namespace SlackJobPosterReceiver.Tests
             };
             mockedDB.Setup(db => db.GetAllFromDB(It.IsAny<string>())).ReturnsAsync(skillsFromDb);
 
-            List<string> updatedSkills = new List<string> {"Java"};
+            List<string> updatedSkills = new List<string> { "Java" };
             JObject updatedMsg = SlackHelper.BuildDefaultSlackHome("testId", updatedSkills);
 
             string expectedUrl = "https://slack.com/api/views.publish";
@@ -792,6 +792,479 @@ namespace SlackJobPosterReceiver.Tests
                 );
 
             mockedDB.Verify(db => db.DeleteFromDB(It.IsAny<Document>()), Times.Once());
+        }
+
+        [Fact]
+        public async void UtilityAddSkillViewTest()
+        {
+            var payloadJson = $@"{{
+                                ""type"": ""view_submission"",
+                                ""view"": {{
+                                    ""callback_id"": ""addSkill_view"",
+                                    ""state"": {{
+                                        ""values"": {{
+                                            ""addSkill_block"":{{
+                                                ""skill_name"": {{
+                                                    ""value"": ""testSkill""
+                                                }}
+                                            }}
+                                        }}
+                                    }}
+                                }},
+                                ""user"": {{
+                                    ""id"": ""testId""
+                                }}
+                            }}";
+
+            Mock<IDBFacade> mockedDB = new Mock<IDBFacade>();
+            List<Document> skillsFromDb = new List<Document> {
+                new Document()
+                {
+                    { "skill_name", "c#"},
+                    { "skill_display_name", "C#"}
+                },
+                new Document()
+                {
+                    { "skill_name", "java"},
+                    { "skill_display_name", "Java"}
+                }
+            };
+            mockedDB.Setup(db => db.GetAllFromDB(It.IsAny<string>())).ReturnsAsync(skillsFromDb);
+
+            List<string> updatedSkills = new List<string> { "C#", "Java", "testSkill" };
+            JObject updatedMsg = SlackHelper.BuildDefaultSlackHome("testId", updatedSkills);
+
+            string expectedUrl = "https://slack.com/api/views.publish";
+
+            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            handlerMock
+               .Protected()
+               .Setup<Task<HttpResponseMessage>>(
+                  "SendAsync",
+                  ItExpr.IsAny<HttpRequestMessage>(),
+                  ItExpr.IsAny<CancellationToken>()
+               )
+               .ReturnsAsync(new HttpResponseMessage()
+               {
+                   StatusCode = HttpStatusCode.OK
+               })
+               .Verifiable();
+
+            var httpClient = new HttpClient(handlerMock.Object)
+            {
+                BaseAddress = new Uri("http://test.com/"),
+            };
+
+            Utility utils = new Utility(mockedDB.Object, mockedDB.Object, httpClient);
+
+            JObject payload = JObject.Parse(payloadJson);
+            await utils.PayloadRouter(payload);
+
+            handlerMock
+                .Protected()
+                .Verify<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    Times.Once(),
+                    ItExpr.Is<HttpRequestMessage>(
+                        r => r.Method == HttpMethod.Post
+                        && r.RequestUri == new Uri(expectedUrl)
+                        && JToken.DeepEquals(JObject.Parse(r.Content.ReadAsStringAsync().Result), updatedMsg)
+                    ),
+                    ItExpr.IsAny<CancellationToken>()
+                );
+
+            mockedDB.Verify(db => db.AddToDB(It.IsAny<Dictionary<string, string>>()), Times.Once());
+        }
+
+        [Fact]
+        public async void UtilityQualifyLeadViewTest()
+        {
+            var payloadJson = $@"{{
+                                ""type"": ""view_submission"",
+                                ""view"": {{
+                                    ""private_metadata"": ""http://testhookurl.com"",
+                                    ""callback_id"": ""messageTs"",
+                                    ""state"": {{
+                                        ""values"": {{
+                                            ""customer_block"":{{
+                                                ""customer_name"": {{
+                                                    ""value"": ""testName""
+                                                }}
+                                            }}
+                                        }}
+                                    }}
+                                }},
+                                ""user"": {{
+                                    ""id"": ""testId""
+                                }}
+                            }}";
+
+            Mock<IDBFacade> mockedDB = new Mock<IDBFacade>();
+            Document leadFromDB = new Document();
+            leadFromDB.Add("message_text", "testMessage");
+            mockedDB.Setup(db => db.GetFromDB(It.IsAny<string>())).Returns(Task.FromResult(leadFromDB));
+
+            string expectedUrl = "http://testhookurl.com";
+
+            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            handlerMock
+               .Protected()
+               .Setup<Task<HttpResponseMessage>>(
+                  "SendAsync",
+                  ItExpr.IsAny<HttpRequestMessage>(),
+                  ItExpr.IsAny<CancellationToken>()
+               )
+               .ReturnsAsync(new HttpResponseMessage()
+               {
+                   StatusCode = HttpStatusCode.OK,
+                   Content = new StringContent($@"{{ ""id"": ""testId"", ""Qualified"": ""statusTest"" }}")
+               })
+               .Verifiable();
+
+            var httpClient = new HttpClient(handlerMock.Object)
+            {
+                BaseAddress = new Uri("http://test.com/"),
+            };
+
+            Utility utils = new Utility(mockedDB.Object, mockedDB.Object, httpClient);
+
+            JObject payload = JObject.Parse(payloadJson);
+            await utils.PayloadRouter(payload);
+
+            handlerMock
+                .Protected()
+                .Verify<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    Times.Once(),
+                    ItExpr.Is<HttpRequestMessage>(
+                        r => r.Method == HttpMethod.Post
+                        && r.RequestUri == new Uri("https://api.close.com/api/v1/opportunity/")
+                    ),
+                    ItExpr.IsAny<CancellationToken>()
+                );
+
+            handlerMock
+                .Protected()
+                .Verify<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    Times.Once(),
+                    ItExpr.Is<HttpRequestMessage>(
+                        r => r.Method == HttpMethod.Post
+                        && r.RequestUri == new Uri(expectedUrl)
+                    ),
+                    ItExpr.IsAny<CancellationToken>()
+                );
+
+            mockedDB.Verify(db => db.AddToDB(It.IsAny<Dictionary<string, string>>()), Times.Once());
+        }
+
+        [Fact]
+        public async void UtilityQualifyLeadBtnTest()
+        {
+            var payloadJson = $@"{{
+                                ""type"": ""block_actions"",
+                                ""container"": {{
+                                    ""type"": ""message"",
+                                    ""message_ts"": ""testTs""
+                                }},
+                                ""blocks"": [
+                                    {{
+                                        ""block_id"": ""msg_header"",
+                                        ""text"": {{
+                                            ""text"": ""testText""
+                                        }}
+                                    }}
+                                ],
+                                ""response_url"": ""http://testresponseurl.com"",
+                                ""actions"":[
+                                    {{
+                                        ""action_id"":""qualifyLead_btn""
+                                    }}
+                                ],
+                                ""trigger_id"":""testTrigger""
+                            }}";
+
+            Mock<IDBFacade> mockedDB = new Mock<IDBFacade>();
+
+            GlobalVars.SLACK_TOKEN = "testToken";
+            string expectedView = SlackHelper.GetQualificationModal("testTs", "http://testresponseurl.com");
+            string expectedUrl = "https://slack.com/api/views.open?token=" + GlobalVars.SLACK_TOKEN + "&trigger_id=testTrigger&view=" + HttpUtility.UrlEncode(expectedView);
+
+            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            handlerMock
+               .Protected()
+               .Setup<Task<HttpResponseMessage>>(
+                  "SendAsync",
+                  ItExpr.IsAny<HttpRequestMessage>(),
+                  ItExpr.IsAny<CancellationToken>()
+               )
+               .ReturnsAsync(new HttpResponseMessage()
+               {
+                   StatusCode = HttpStatusCode.OK
+               })
+               .Verifiable();
+
+            var httpClient = new HttpClient(handlerMock.Object)
+            {
+                BaseAddress = new Uri("http://test.com/"),
+            };
+
+            Utility utils = new Utility(mockedDB.Object, mockedDB.Object, httpClient);
+
+            JObject payload = JObject.Parse(payloadJson);
+            await utils.PayloadRouter(payload);
+
+            handlerMock
+                .Protected()
+                .Verify<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    Times.Once(),
+                    ItExpr.Is<HttpRequestMessage>(
+                        r => r.Method == HttpMethod.Get
+                        && r.RequestUri == new Uri(expectedUrl)
+                    ),
+                    ItExpr.IsAny<CancellationToken>()
+                );
+
+            mockedDB.Verify(db => db.AddToDB(It.IsAny<Dictionary<string, string>>()), Times.Once());
+        }
+
+
+        [Fact]
+        public async void UtilityAddToCloseBtnTest()
+        {
+            var payloadJson = $@"{{
+                                ""type"": ""block_actions"",
+                                ""container"": {{
+                                    ""type"": ""message"",
+                                    ""message_ts"": ""testTs""
+                                }},
+                                ""blocks"": [
+                                    {{
+                                        ""block_id"": ""msg_header"",
+                                        ""text"": {{
+                                            ""text"": ""testText""
+                                        }}
+                                    }}
+                                ],
+                                ""elements"": [
+                                    {{
+                                        ""action_id"": ""customer_select"",
+                                        ""initial_option"": {{
+                                            ""value"": ""testOption""
+                                        }}
+                                    }}
+                                ],
+                                ""response_url"": ""http://testresponseurl.com"",
+                                ""actions"":[
+                                    {{
+                                        ""action_id"":""addToClose_btn""
+                                    }}
+                                ],
+                                ""trigger_id"":""testTrigger""
+                            }}";
+
+            Mock<IDBFacade> mockedDB = new Mock<IDBFacade>();
+            List<Document> leadsFromDb = new List<Document> {
+                new Document()
+                {
+                    { "lead_id", "testLeadId"}
+                }
+            };
+            mockedDB.Setup(db => db.GetFromDB(It.IsAny<string>())).ReturnsAsync(leadsFromDb[0]);
+
+            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            handlerMock
+               .Protected()
+               .Setup<Task<HttpResponseMessage>>(
+                  "SendAsync",
+                  ItExpr.IsAny<HttpRequestMessage>(),
+                  ItExpr.IsAny<CancellationToken>()
+               )
+               .ReturnsAsync(new HttpResponseMessage()
+               {
+                   StatusCode = HttpStatusCode.OK,
+                   Content = new StringContent($@"{{ ""id"": ""testId"", ""Qualified"": ""statusTest"" }}")
+               })
+               .Verifiable();
+
+            var httpClient = new HttpClient(handlerMock.Object)
+            {
+                BaseAddress = new Uri("http://test.com/"),
+            };
+
+            Utility utils = new Utility(mockedDB.Object, mockedDB.Object, httpClient);
+
+            JObject payload = JObject.Parse(payloadJson);
+            await utils.PayloadRouter(payload);
+
+            handlerMock
+                .Protected()
+                .Verify<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    Times.Once(),
+                    ItExpr.Is<HttpRequestMessage>(
+                        r => r.Method == HttpMethod.Post
+                        && r.RequestUri == new Uri("https://api.close.com/api/v1/opportunity/")
+                    ),
+                    ItExpr.IsAny<CancellationToken>()
+                );
+
+            handlerMock
+                .Protected()
+                .Verify<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    Times.Once(),
+                    ItExpr.Is<HttpRequestMessage>(
+                        r => r.Method == HttpMethod.Post
+                        && r.RequestUri == new Uri("http://testresponseurl.com")
+                    ),
+                    ItExpr.IsAny<CancellationToken>()
+                );
+        }
+
+        [Fact]
+        public async void UtilityCustomerSelectBtnTest()
+        {
+            var payloadJson = $@"{{
+                                ""type"": ""block_actions"",
+                                ""container"": {{
+                                    ""type"": ""message"",
+                                    ""message_ts"": ""testTs""
+                                }},
+                                ""blocks"": [
+                                    {{
+                                        ""block_id"": ""msg_header"",
+                                        ""text"": {{
+                                            ""text"": ""testText""
+                                        }}
+                                    }}
+                                ],
+                                ""response_url"": ""http://testresponseurl.com"",
+                                ""actions"":[
+                                    {{
+                                        ""action_id"": ""customer_select"",
+                                        ""selected_option"":{{
+                                            ""text"": {{
+                                                ""text"": ""optionText""
+                                            }},
+                                            ""value"": ""optionValue""
+                                        }}
+                                    }}
+                                ],
+                                ""trigger_id"":""testTrigger""
+                            }}";
+
+            Mock<IDBFacade> mockedDB = new Mock<IDBFacade>();
+
+            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            handlerMock
+               .Protected()
+               .Setup<Task<HttpResponseMessage>>(
+                  "SendAsync",
+                  ItExpr.IsAny<HttpRequestMessage>(),
+                  ItExpr.IsAny<CancellationToken>()
+               )
+               .ReturnsAsync(new HttpResponseMessage()
+               {
+                   StatusCode = HttpStatusCode.OK,
+                   Content = new StringContent($@"{{""data"":[
+                       {{""display_name"":""displayTest"",""id"":""testId""}}
+                       ]}}")
+               })
+               .Verifiable();
+
+            var httpClient = new HttpClient(handlerMock.Object)
+            {
+                BaseAddress = new Uri("http://test.com/"),
+            };
+
+            Utility utils = new Utility(mockedDB.Object, mockedDB.Object, httpClient);
+
+            JObject payload = JObject.Parse(payloadJson);
+            await utils.PayloadRouter(payload);
+
+            handlerMock
+                .Protected()
+                .Verify<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    Times.Exactly(2),
+                    ItExpr.Is<HttpRequestMessage>(
+                        r => r.Method == HttpMethod.Post
+                        && r.RequestUri == new Uri("http://testresponseurl.com")
+                    ),
+                    ItExpr.IsAny<CancellationToken>()
+                );
+
+            mockedDB.Verify(db => db.AddToDB(It.IsAny<Dictionary<string, string>>()), Times.Once());
+        }
+
+        [Fact]
+        public async void UtilityEventRouterHomeTest()
+        {
+            var payloadJson = $@"{{
+                                ""type"": ""app_home_opened"",
+                                ""user"": ""testId""
+                            }}";
+
+            Mock<IDBFacade> mockedDB = new Mock<IDBFacade>();
+            List<Document> skillsFromDb = new List<Document> {
+                new Document()
+                {
+                    { "skill_name", "c#"},
+                    { "skill_display_name", "C#"}
+                },
+                new Document()
+                {
+                    { "skill_name", "java"},
+                    { "skill_display_name", "Java"}
+                }
+            };
+            mockedDB.Setup(db => db.GetAllFromDB(It.IsAny<string>())).ReturnsAsync(skillsFromDb);
+
+            List<string> updatedSkills = new List<string> { "C#", "Java" };
+            JObject updatedMsg = SlackHelper.BuildDefaultSlackHome("testId", updatedSkills);
+
+            string expectedUrl = "https://slack.com/api/views.publish";
+
+            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            handlerMock
+               .Protected()
+               .Setup<Task<HttpResponseMessage>>(
+                  "SendAsync",
+                  ItExpr.IsAny<HttpRequestMessage>(),
+                  ItExpr.IsAny<CancellationToken>()
+               )
+               .ReturnsAsync(new HttpResponseMessage()
+               {
+                   StatusCode = HttpStatusCode.OK
+               })
+               .Verifiable();
+
+            var httpClient = new HttpClient(handlerMock.Object)
+            {
+                BaseAddress = new Uri("http://test.com/"),
+            };
+
+            Utility utils = new Utility(mockedDB.Object, mockedDB.Object, httpClient);
+
+            GlobalVars.SLACK_TOKEN = "testToken";
+
+            JObject payload = JObject.Parse(payloadJson);
+            await utils.EventPayloadRouter(payload);
+
+            handlerMock
+                .Protected()
+                .Verify<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    Times.Once(),
+                    ItExpr.Is<HttpRequestMessage>(
+                        r => r.Method == HttpMethod.Post
+                        && r.RequestUri == new Uri(expectedUrl)
+                        && JToken.DeepEquals(JObject.Parse(r.Content.ReadAsStringAsync().Result), updatedMsg)
+                    ),
+                    ItExpr.IsAny<CancellationToken>()
+                );
         }
     }
 }
