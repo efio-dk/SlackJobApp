@@ -1,7 +1,9 @@
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
 using Newtonsoft.Json.Linq;
+using SlackMessageBuilder;
 
 namespace SlackJobPosterReceiver.API
 {
@@ -34,6 +36,21 @@ namespace SlackJobPosterReceiver.API
             const string url = "https://slack.com/api/views.publish";
 
             return await _client.PostAsJsonAsync(url, updatedMsg, GlobalVars.SLACK_TOKEN, "token");
+        }
+
+        internal async Task<HttpResponseMessage> EphemeralMessage(string errorText, string channelId, string userId)
+        {
+            const string url = "https://slack.com/api/chat.postEphemeral";
+            BlocksBuilder builder = new BlocksBuilder();
+            builder.AddBlock(new Section(new Text(errorText)));
+
+            JObject ephemeralMessage = new JObject();
+            ephemeralMessage.Add("channel", channelId);
+            ephemeralMessage.Add("text", errorText);
+            ephemeralMessage.Add("user", userId);
+            ephemeralMessage.Add("blocks", builder.GetJObject());
+
+            return await _client.PostAsJsonAsync(url, ephemeralMessage, GlobalVars.SLACK_TOKEN, "token");
         }
     }
 }

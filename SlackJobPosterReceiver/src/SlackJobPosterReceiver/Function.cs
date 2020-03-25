@@ -18,7 +18,7 @@ namespace SlackJobPosterReceiver
     {
         private readonly Utility _utils;
 
-        public Function(IDBFacade leadsDB, IDBFacade skillsDB)
+        public Function(IDBFacade leadsDB = null, IDBFacade skillsDB = null)
         {
             if (leadsDB is null)
                 leadsDB = new AWSDB(GlobalVars.SLACKLEADS_TABLE);
