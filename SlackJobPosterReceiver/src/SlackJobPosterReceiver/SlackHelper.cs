@@ -106,7 +106,7 @@ namespace SlackJobPosterReceiver
         {
             //create Slack modal
             ModalBuilder builder = new ModalBuilder("An error occured", submitButton: false,closeText: "Ok");
-            builder.AddBlock(new Section(new Text(errorMessage)));
+            builder.AddBlock(new Section(new Text(errorMessage, "mrkdwn")));
 
             return builder.GetJObject().ToString();
         }

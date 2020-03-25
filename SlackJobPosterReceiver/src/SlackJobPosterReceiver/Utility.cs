@@ -163,7 +163,7 @@ namespace SlackJobPosterReceiver
             }
             catch (CloseConnectionException e)
             {
-                string view = SlackHelper.GetErrorModal("There was a problem connecting to Close. Try again later.");
+                string view = SlackHelper.GetErrorModal(":see_no_evil: :heavy_multiplication_x: There was a problem connecting to Close. Try again later.");
 
                 await _slackApi.TriggerModalOpen(GlobalVars.SLACK_TOKEN, triggerId, view);
             }
@@ -195,7 +195,7 @@ namespace SlackJobPosterReceiver
             }
             catch (CloseConnectionException e)
             {
-                string view = SlackHelper.GetErrorModal("There was a problem connecting to Close. Try again later.");
+                string view = SlackHelper.GetErrorModal(":see_no_evil: :heavy_multiplication_x: There was a problem connecting to Close. Try again later.");
 
                 await _slackApi.TriggerModalOpen(GlobalVars.SLACK_TOKEN, triggerId, view);
             }
@@ -232,8 +232,7 @@ namespace SlackJobPosterReceiver
             }
             catch (CloseConnectionException e)
             {
-                GlobalVars.CONTEXT.Logger.LogLine("Got an exception here!");
-                string view = SlackHelper.GetErrorModal("There was a problem connecting to Close. Try again later.");
+                string view = SlackHelper.GetErrorModal(":see_no_evil: :heavy_multiplication_x: There was a problem connecting to Close. Try again later.");
 
                 returnObj = await _slackApi.TriggerModalOpen(GlobalVars.SLACK_TOKEN, triggerId, view, true);
             }
