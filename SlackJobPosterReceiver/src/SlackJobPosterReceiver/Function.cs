@@ -80,12 +80,13 @@ namespace SlackJobPosterReceiver
                 JObject payload = Utility.GetBodyJObject(request.Body);
 
                 //depending on the payload, perform needed action
-                await _utils.PayloadRouter(payload);
+                JObject responseObj = await _utils.PayloadRouter(payload);
 
                 // TODO: refactor for more reliability
                 response = new APIGatewayProxyResponse
                 {
-                    StatusCode = (int)HttpStatusCode.OK
+                    StatusCode = (int)HttpStatusCode.OK,
+                    Body = responseObj.ToString()
                 };
 
                 context.Logger.LogLine("Finished processing");

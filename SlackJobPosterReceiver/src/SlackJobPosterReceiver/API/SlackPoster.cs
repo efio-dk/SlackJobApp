@@ -16,14 +16,25 @@ namespace SlackJobPosterReceiver.API
             _client = client ?? new HttpClient();
         }
 
-        public async Task<HttpResponseMessage> TriggerModalOpen(string token, string triggerId, string view)
+        public async Task<JObject> TriggerModalOpen(string token, string triggerId, string view, bool responseAction = false)
         {
+            JObject newView;
+            if (responseAction)
+            {
+                newView = new JObject();
+                newView.Add("response_action", "push");
+                newView.Add("view", JObject.Parse(view));
+            }
+            else
+                newView = JObject.Parse(view);
+
+            GlobalVars.CONTEXT.Logger.LogLine(newView.ToString());
             //url to open a view in Slack
-            string url = "https://slack.com/api/views.open?token=" + token + "&trigger_id=" + triggerId + "&view=" + HttpUtility.UrlEncode(view);
+            string url = "https://slack.com/api/views.open?token=" + token + "&trigger_id=" + triggerId + "&view=" + HttpUtility.UrlEncode(newView.ToString());
 
             HttpResponseMessage responses = await _client.GetAsync(url);
 
-            return responses;
+            return newView;
         }
 
         public async Task<HttpResponseMessage> UpdateMessage(JObject updatedMsg, string hookUrl)
@@ -36,21 +47,6 @@ namespace SlackJobPosterReceiver.API
             const string url = "https://slack.com/api/views.publish";
 
             return await _client.PostAsJsonAsync(url, updatedMsg, GlobalVars.SLACK_TOKEN, "token");
-        }
-
-        internal async Task<HttpResponseMessage> EphemeralMessage(string errorText, string channelId, string userId)
-        {
-            const string url = "https://slack.com/api/chat.postEphemeral";
-            BlocksBuilder builder = new BlocksBuilder();
-            builder.AddBlock(new Section(new Text(errorText)));
-
-            JObject ephemeralMessage = new JObject();
-            ephemeralMessage.Add("channel", channelId);
-            ephemeralMessage.Add("text", errorText);
-            ephemeralMessage.Add("user", userId);
-            ephemeralMessage.Add("blocks", builder.GetJObject());
-
-            return await _client.PostAsJsonAsync(url, ephemeralMessage, GlobalVars.SLACK_TOKEN, "token");
         }
     }
 }

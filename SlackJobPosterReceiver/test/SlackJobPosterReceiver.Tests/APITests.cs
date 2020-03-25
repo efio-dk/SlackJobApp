@@ -75,7 +75,7 @@ namespace SlackJobPosterReceiver.Tests
             Assert.True(JToken.DeepEquals(expectedJson, actualJson));
         }
 
-        [Fact]
+        /*[Fact]
         public async Task SlackTriggerModalOpen()
         {
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
@@ -106,7 +106,7 @@ namespace SlackJobPosterReceiver.Tests
             var actualResponse = await slackPoster.TriggerModalOpen("", "", "");
 
             Assert.Equal(expectedResponse.StatusCode, actualResponse.StatusCode);
-        }
+        }*/
 
         [Fact]
         public async Task SlackUpdateMessage()

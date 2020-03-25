@@ -39,8 +39,9 @@ namespace SlackJobPosterReceiver
             return JObject.Parse(qscoll["payload"]);
         }
 
-        public async Task PayloadRouter(JObject payload)
+        public async Task<JObject> PayloadRouter(JObject payload)
         {
+            JObject returnObj = new JObject();
             if (payload.GetValue("type").Value<string>() == "block_actions" && !(payload.SelectToken("container.type") is null))
             {
                 if (payload.SelectToken("container.type").Value<string>() == "message")
@@ -49,23 +50,21 @@ namespace SlackJobPosterReceiver
                     // quering with JsonPath queries for easier identification of the elements when in array
                     string msgHeader = payload.SelectToken("$..blocks[?(@.block_id=='msg_header')].text.text").Value<string>();
                     string hookUrl = payload.SelectToken("response_url").Value<string>();
-                    string channelId = payload.SelectToken("channel.id").Value<string>();
-                    string userId = payload.SelectToken("user.id").Value<string>();
+                    string triggerId = payload.GetValue("trigger_id").Value<string>();
 
                     switch (payload.SelectToken("actions[0].action_id").Value<string>())
                     {
                         case "qualifyLead_btn":
-                            string triggerId = payload.GetValue("trigger_id").Value<string>();
                             await QualifyLead(msgTs, msgHeader, hookUrl, triggerId);
                             break;
                         case "addToClose_btn":
                             string optionValue = payload.SelectToken("$...elements[?(@.action_id=='customer_select')].initial_option.value").Value<string>();
-                            await AddToClose(msgTs, msgHeader, hookUrl, optionValue, channelId, userId);
+                            await AddToClose(msgTs, msgHeader, hookUrl, optionValue, triggerId);
                             break;
                         case "customer_select":
                             string customerName = payload.SelectToken("actions[0].selected_option.text.text").Value<string>();
                             string leadId = payload.SelectToken("actions[0].selected_option.value").Value<string>();
-                            await CustomerSelected(msgTs, msgHeader, hookUrl, customerName, leadId, channelId, userId);
+                            await CustomerSelected(msgTs, msgHeader, hookUrl, customerName, leadId, triggerId);
                             break;
                     }
                 }
@@ -89,6 +88,7 @@ namespace SlackJobPosterReceiver
             {
                 string callbackId = payload.SelectToken("view.callback_id").Value<string>();
                 string userId = payload.SelectToken("user.id").Value<string>();
+                string triggerId = payload.GetValue("trigger_id").Value<string>();
 
                 switch (callbackId)
                 {
@@ -100,10 +100,12 @@ namespace SlackJobPosterReceiver
                         string hookUrl = payload.SelectToken("view.private_metadata").Value<string>();
                         string leadName = payload.SelectToken("view.state.values.customer_block.customer_name.value").Value<string>();
 
-                        await QualifyLeadViewSubmitted(callbackId, hookUrl, leadName, userId);
+                        returnObj = await QualifyLeadViewSubmitted(callbackId, hookUrl, leadName, triggerId);
                         break;
                 }
             }
+
+            return returnObj;
         }
 
         public async Task EventPayloadRouter(JObject eventPayload)
@@ -140,7 +142,7 @@ namespace SlackJobPosterReceiver
             await _dbLeads.AddToDB(parameters);
         }
 
-        private async Task AddToClose(string msgTs, string msgHeader, string hookUrl, string optionValue, string channelId, string userId)
+        private async Task AddToClose(string msgTs, string msgHeader, string hookUrl, string optionValue, string triggerId)
         {
             Document leadDoc = await _dbLeads.GetFromDB(msgTs);
             string lead_id;
@@ -161,19 +163,20 @@ namespace SlackJobPosterReceiver
             }
             catch (CloseConnectionException e)
             {
-                await _slackApi.EphemeralMessage("There was a problem connecting to Close. Try again later.", channelId, userId);
+                string view = SlackHelper.GetErrorModal("There was a problem connecting to Close. Try again later.");
+
+                await _slackApi.TriggerModalOpen(GlobalVars.SLACK_TOKEN, triggerId, view);
             }
         }
 
-        private async Task CustomerSelected(string msgTs, string msgHeader, string hookUrl, string customerName, string leadId, string channelId, string userId)
+        private async Task CustomerSelected(string msgTs, string msgHeader, string hookUrl, string customerName, string leadId, string triggerId)
         {
             //build document to be persisted in DB
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
                 { "message_ts", msgTs },
                 { "message_text", msgHeader },
-                { "lead_id", leadId },
-                { "channel_id", channelId }
+                { "lead_id", leadId }
             };
 
             // persist select choice on DB for each message
@@ -192,15 +195,17 @@ namespace SlackJobPosterReceiver
             }
             catch (CloseConnectionException e)
             {
-                await _slackApi.EphemeralMessage("There was a problem connecting to Close. Try again later.", channelId, userId);
+                string view = SlackHelper.GetErrorModal("There was a problem connecting to Close. Try again later.");
+
+                await _slackApi.TriggerModalOpen(GlobalVars.SLACK_TOKEN, triggerId, view);
             }
         }
 
-        private async Task QualifyLeadViewSubmitted(string msgTs, string hookUrl, string leadName, string userId)
+        private async Task<JObject> QualifyLeadViewSubmitted(string msgTs, string hookUrl, string leadName, string triggerId)
         {
+            JObject returnObj = new JObject();
             Document document = await _dbLeads.GetFromDB(msgTs);
             string msgHeader = document["message_text"].ToString();
-            string channelId = document["channel_id"].ToString();
 
             try
             {
@@ -220,16 +225,20 @@ namespace SlackJobPosterReceiver
                 {
                     { "message_ts", msgTs },
                     { "message_text", msgHeader },
-                    { "lead_id", leadId },
-                    { "channel_id", channelId }
+                    { "lead_id", leadId }
                 };
 
                 await _dbLeads.AddToDB(parameters);
             }
             catch (CloseConnectionException e)
             {
-                await _slackApi.EphemeralMessage("There was a problem connecting to Close. Try again later.", channelId, userId);
+                GlobalVars.CONTEXT.Logger.LogLine("Got an exception here!");
+                string view = SlackHelper.GetErrorModal("There was a problem connecting to Close. Try again later.");
+
+                returnObj = await _slackApi.TriggerModalOpen(GlobalVars.SLACK_TOKEN, triggerId, view, true);
             }
+
+            return returnObj;
         }
 
         private async Task AddSkill(string triggerId)

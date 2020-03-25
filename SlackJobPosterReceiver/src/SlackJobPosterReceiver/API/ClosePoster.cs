@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -26,6 +27,8 @@ namespace SlackJobPosterReceiver.API
             try
             {
                 response = await _client.PostAsJsonAsync("https://api.close.com/api/v1/lead/", leadObj, GlobalVars.CLOSE_TOKEN);
+                if(response.StatusCode != HttpStatusCode.OK)
+                    throw new CloseConnectionException();
             }
             catch
             {
@@ -54,6 +57,8 @@ namespace SlackJobPosterReceiver.API
             try
             {
                 response = await _client.PostAsJsonAsync("https://api.close.com/api/v1/opportunity/", opportunityObj, GlobalVars.CLOSE_TOKEN);
+                if(response.StatusCode != HttpStatusCode.OK)
+                    throw new CloseConnectionException();
             }
             catch
             {
@@ -70,6 +75,8 @@ namespace SlackJobPosterReceiver.API
             try
             {
                 response = await _client.GetAsJsonAsync("https://api.close.com/api/v1/status/opportunity/", GlobalVars.CLOSE_TOKEN);
+                if(response.StatusCode != HttpStatusCode.OK)
+                    throw new CloseConnectionException();
             }
             catch
             {
@@ -90,6 +97,8 @@ namespace SlackJobPosterReceiver.API
             try
             {
                 response = await _client.GetAsJsonAsync("https://api.close.com/api/v1/lead/", GlobalVars.CLOSE_TOKEN);
+                if(response.StatusCode != HttpStatusCode.OK)
+                    throw new CloseConnectionException();
             }
             catch
             {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
@@ -99,6 +100,15 @@ namespace SlackJobPosterReceiver
             ViewBuilder builder = new ViewBuilder(userId, homeView);
 
             return builder.GetJObject();
+        }
+
+        internal static string GetErrorModal(string errorMessage)
+        {
+            //create Slack modal
+            ModalBuilder builder = new ModalBuilder("An error occured", submitButton: false,closeText: "Ok");
+            builder.AddBlock(new Section(new Text(errorMessage)));
+
+            return builder.GetJObject().ToString();
         }
     }
 }

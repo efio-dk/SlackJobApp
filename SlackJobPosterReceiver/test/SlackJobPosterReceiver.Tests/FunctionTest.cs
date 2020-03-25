@@ -811,6 +811,7 @@ namespace SlackJobPosterReceiver.Tests
                                         }}
                                     }}
                                 }},
+                                ""trigger_id"": ""testTriggerId"",
                                 ""user"": {{
                                     ""id"": ""testId""
                                 }}
@@ -887,6 +888,7 @@ namespace SlackJobPosterReceiver.Tests
                                 ""user"": {{
                                     ""id"": ""testUserId""
                                 }},
+                                ""trigger_id"":""testTriggerId"",
                                 ""view"": {{
                                     ""private_metadata"": ""http://testhookurl.com"",
                                     ""callback_id"": ""messageTs"",
@@ -908,7 +910,6 @@ namespace SlackJobPosterReceiver.Tests
             Mock<IDBFacade> mockedDB = new Mock<IDBFacade>();
             Document leadFromDB = new Document();
             leadFromDB.Add("message_text", "testMessage");
-            leadFromDB.Add("channel_id", "testChannelId");
             mockedDB.Setup(db => db.GetFromDB(It.IsAny<string>())).Returns(Task.FromResult(leadFromDB));
 
             string expectedUrl = "http://testhookurl.com";
