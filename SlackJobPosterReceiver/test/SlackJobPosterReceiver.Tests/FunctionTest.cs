@@ -881,6 +881,12 @@ namespace SlackJobPosterReceiver.Tests
         {
             var payloadJson = $@"{{
                                 ""type"": ""view_submission"",
+                                ""channel"": {{
+                                    ""id"": ""testChannelId""
+                                }},
+                                ""user"": {{
+                                    ""id"": ""testUserId""
+                                }},
                                 ""view"": {{
                                     ""private_metadata"": ""http://testhookurl.com"",
                                     ""callback_id"": ""messageTs"",
@@ -902,6 +908,7 @@ namespace SlackJobPosterReceiver.Tests
             Mock<IDBFacade> mockedDB = new Mock<IDBFacade>();
             Document leadFromDB = new Document();
             leadFromDB.Add("message_text", "testMessage");
+            leadFromDB.Add("channel_id", "testChannelId");
             mockedDB.Setup(db => db.GetFromDB(It.IsAny<string>())).Returns(Task.FromResult(leadFromDB));
 
             string expectedUrl = "http://testhookurl.com";
@@ -966,6 +973,12 @@ namespace SlackJobPosterReceiver.Tests
                                 ""container"": {{
                                     ""type"": ""message"",
                                     ""message_ts"": ""testTs""
+                                }},
+                                ""channel"": {{
+                                    ""id"": ""testChannelId""
+                                }},
+                                ""user"": {{
+                                    ""id"": ""testUserId""
                                 }},
                                 ""blocks"": [
                                     {{
@@ -1035,6 +1048,12 @@ namespace SlackJobPosterReceiver.Tests
         {
             var payloadJson = $@"{{
                                 ""type"": ""block_actions"",
+                                ""channel"": {{
+                                    ""id"": ""testChannelId""
+                                }},
+                                ""user"": {{
+                                    ""id"": ""testUserId""
+                                }},
                                 ""container"": {{
                                     ""type"": ""message"",
                                     ""message_ts"": ""testTs""
@@ -1128,6 +1147,15 @@ namespace SlackJobPosterReceiver.Tests
         {
             var payloadJson = $@"{{
                                 ""type"": ""block_actions"",
+                                ""channel"": {{
+                                    ""id"": ""testChannelId""
+                                }},
+                                ""user"": {{
+                                    ""id"": ""testUserId""
+                                }},
+                                ""channel"": {{
+                                    ""id"": ""testId""
+                                }},
                                 ""container"": {{
                                     ""type"": ""message"",
                                     ""message_ts"": ""testTs""
