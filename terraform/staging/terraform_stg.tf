@@ -109,7 +109,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_SlackJobPosterReceive
 
 # API Gateway
 resource "aws_api_gateway_rest_api" "slack-app-api" {
-  name = "slackAppApi"
+  name = "slackAppApi-stg"
 }
 
 resource "aws_api_gateway_resource" "slack-receiver-resource" {
