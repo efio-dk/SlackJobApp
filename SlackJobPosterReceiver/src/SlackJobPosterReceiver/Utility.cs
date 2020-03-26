@@ -41,7 +41,7 @@ namespace SlackJobPosterReceiver
 
         public async Task<JObject> PayloadRouter(JObject payload)
         {
-            JObject returnObj = new JObject();
+            JObject returnObj = null;
             if (payload.GetValue("type").Value<string>() == "block_actions" && !(payload.SelectToken("container.type") is null))
             {
                 if (payload.SelectToken("container.type").Value<string>() == "message")
@@ -203,7 +203,7 @@ namespace SlackJobPosterReceiver
 
         private async Task<JObject> QualifyLeadViewSubmitted(string msgTs, string hookUrl, string leadName, string triggerId)
         {
-            JObject returnObj = new JObject();
+            JObject returnObj = null;
             Document document = await _dbLeads.GetFromDB(msgTs);
             string msgHeader = document["message_text"].ToString();
 

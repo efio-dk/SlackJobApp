@@ -8,3 +8,5 @@ coverage.json
 aws-lambda-tools-defaults.json
 .terraform/
 .vs/
+lcov.opencover.xml
+*.code-workspace

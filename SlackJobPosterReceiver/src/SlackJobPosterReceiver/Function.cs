@@ -86,10 +86,15 @@ namespace SlackJobPosterReceiver
                 response = new APIGatewayProxyResponse
                 {
                     StatusCode = (int)HttpStatusCode.OK,
-                    Body = responseObj.ToString()
                 };
-
-                context.Logger.LogLine("Finished processing");
+                if (responseObj != null)
+                {
+                    response.Body = responseObj.ToString();
+                    response.Headers = new Dictionary<string, string>()
+                    {
+                        {"Content-type", "application/json"}
+                    };
+                }
             }
             else if (!(eventPayload.SelectToken("event") is null))
             {

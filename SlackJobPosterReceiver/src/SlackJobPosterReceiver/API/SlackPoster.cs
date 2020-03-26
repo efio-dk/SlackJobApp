@@ -28,7 +28,6 @@ namespace SlackJobPosterReceiver.API
             else
                 newView = JObject.Parse(view);
 
-            GlobalVars.CONTEXT.Logger.LogLine(newView.ToString());
             //url to open a view in Slack
             string url = "https://slack.com/api/views.open?token=" + token + "&trigger_id=" + triggerId + "&view=" + HttpUtility.UrlEncode(newView.ToString());
 
