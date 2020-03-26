@@ -36,7 +36,7 @@ resource "aws_lambda_function" "stg-SlackJobPoster-lambda" {
   function_name    = "stg-SlackJobPoster"
   handler          = "SlackJobPoster::SlackJobPoster.Function::FunctionHandler"
   runtime          = "dotnetcore2.1"
-  role             = "arn:aws:iam::833191605868:role/SlackJobPosterRole"
+  role             = "arn:aws:iam::833191605868:role/DeleteThisRole"
   filename         = "../../SlackJobPoster/src/SlackJobPoster/bin/Debug/netcoreapp2.1/SlackJobPoster.zip"
   source_code_hash = filebase64sha256("../../SlackJobPoster/src/SlackJobPoster/bin/Debug/netcoreapp2.1/SlackJobPoster.zip")
   timeout          = 10
