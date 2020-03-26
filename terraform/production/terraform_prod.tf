@@ -49,8 +49,8 @@ resource "aws_lambda_function" "prod-SlackJobPoster-lambda" {
 
   environment {
     variables = {
-      CLOSE_TOKEN = data.aws_ssm_parameter.close-token.value
-      AWS_TABLE_SLACK_SKILLS   = data.aws_ssm_parameter.slackskills-table.value
+      CLOSE_TOKEN            = data.aws_ssm_parameter.close-token.value
+      AWS_TABLE_SLACK_SKILLS = data.aws_ssm_parameter.slackskills-table.value
     }
   }
 }
@@ -86,10 +86,30 @@ resource "aws_lambda_function" "prod-SlackJobPosterReceiver-lambda" {
   }
 }
 
+# Cloudwatch
+resource "aws_cloudwatch_event_rule" "prod-SlackJobPosterReceiver-rule" {
+  name                = "prod-SlackJobPosterReceiver-warmer"
+  schedule_expression = "rate(5 minutes)"
+}
+
+resource "aws_cloudwatch_event_target" "prod-SlackJobPosterReceiver-target" {
+  rule  = aws_cloudwatch_event_rule.prod-SlackJobPosterReceiver-rule.name
+  arn   = aws_lambda_function.prod-SlackJobPosterReceiver-lambda.arn
+  input = "{\"Resource\":\"WarmingLambda\",\"Body\":\"5\"}"
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_to_call_SlackJobPosterReceiver" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.prod-SlackJobPosterReceiver-lambda.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.prod-SlackJobPosterReceiver-rule.arn
+}
+
 
 # API Gateway
 resource "aws_api_gateway_rest_api" "slack-app-api" {
-  name = "slackAppApi"
+  name = "slackAppApi-prod"
 }
 
 resource "aws_api_gateway_resource" "slack-receiver-resource" {
