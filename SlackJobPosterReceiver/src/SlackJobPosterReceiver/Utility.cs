@@ -347,7 +347,7 @@ namespace SlackJobPosterReceiver
 
             foreach (JObject lead in leads.SelectToken("data").Value<JArray>())
             {
-                customers.Add(lead["display_name"].Value<string>(), new Option(lead["display_name"].Value<string>(), lead["id"].Value<string>()));
+                customers.Add(lead["id"].Value<string>(), new Option(lead["display_name"].Value<string>(), lead["id"].Value<string>()));
             }
 
             return customers;
