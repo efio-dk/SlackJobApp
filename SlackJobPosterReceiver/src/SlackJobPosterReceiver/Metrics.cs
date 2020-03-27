@@ -19,8 +19,6 @@ namespace SlackJobPosterReceiver
 
         public static void AddData(MetricDatum data)
         {
-            GlobalVars.CONTEXT.Logger.LogLine("Adding data");
-            GlobalVars.CONTEXT.Logger.LogLine(System.Environment.StackTrace);
             _data.Add(data);
         }
 
@@ -33,7 +31,6 @@ namespace SlackJobPosterReceiver
                 Namespace = "Slack App",
                 MetricData = _data
             });
-            GlobalVars.CONTEXT.Logger.LogLine("Finished adding metric");
             _data = new List<MetricDatum>();
         }
     }
