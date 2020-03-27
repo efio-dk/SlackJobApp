@@ -26,7 +26,8 @@ namespace SlackJobPosterReceiver
 
         public static async Task CommitDataAsync()
         {
-            GlobalVars.CONTEXT.Logger.LogLine("Adding metric");
+            if (_data.Count <= 0)
+                return;
             await _amazonCloudWatch.PutMetricDataAsync(new PutMetricDataRequest
             {
                 Namespace = "Slack App",
