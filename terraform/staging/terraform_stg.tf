@@ -1,3 +1,9 @@
+variable "test_var" {
+  type        = string
+  description = "Test var."
+}
+
+
 # Region
 provider "aws" {
   region = "eu-west-1"
@@ -73,6 +79,7 @@ resource "aws_lambda_function" "stg-SlackJobPosterReceiver-lambda" {
   tags = {
     Name        = "stg-SlackJobPosterReceiver"
     Environment = "staging"
+    Test = var.test_var
   }
 
   environment {
