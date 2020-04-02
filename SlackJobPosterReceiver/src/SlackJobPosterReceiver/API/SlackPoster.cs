@@ -50,7 +50,7 @@ namespace SlackJobPosterReceiver.API
 
         public async Task<HttpResponseMessage> TestAPI()
         {
-            const string url = "https://slack.com/nono/api.test";
+            const string url = "https://slack.com/api/api.test";
 
             return await _client.GetAsync(url);
         }
