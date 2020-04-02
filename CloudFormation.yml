@@ -120,6 +120,8 @@ Resources:
                 runtime-versions:
                   dotnet: 2.2
                 commands:
+                  - TAG=$(git rev-parse HEAD | xargs git rev-list --parents -n 1 | awk '{print $2}')
+                  - echo $TAG
                   - dotnet tool install --global Amazon.Lambda.Tools
                   - wget https://releases.hashicorp.com/terraform/0.12.20/terraform_0.12.20_linux_amd64.zip -q # getting terraform executable with no console output (-q)
                   - unzip terraform_0.12.20_linux_amd64.zip -d ./terraform_app

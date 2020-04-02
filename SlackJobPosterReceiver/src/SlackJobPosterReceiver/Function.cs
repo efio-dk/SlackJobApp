@@ -7,6 +7,9 @@ using Newtonsoft.Json.Linq;
 using System.Net.Http;
 using SlackJobPosterReceiver.Database;
 using System.Collections.Generic;
+using Amazon.CloudWatch.Model;
+using Amazon.CloudWatch;
+using System;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -16,21 +19,68 @@ namespace SlackJobPosterReceiver
     public class Function
     {
         private readonly Utility _utils;
+        private readonly HealthChecks _healthChecker;
 
         public Function()
         {
+            HttpClient client = new HttpClient();
             IDBFacade leadsDB = new AWSDB(GlobalVars.SLACKLEADS_TABLE);
             IDBFacade skillsDB = new AWSDB(GlobalVars.SLACKSKILLS_TABLE);
-            _utils = new Utility(leadsDB, skillsDB, new HttpClient());
+
+            _utils = new Utility(leadsDB, skillsDB, client);
+            _healthChecker = new HealthChecks(leadsDB, client);
         }
 
         public Function(IDBFacade leadsDB, IDBFacade skillsDB)
         {
-            _utils = new Utility(leadsDB, skillsDB, new HttpClient());
+            HttpClient client = new HttpClient();
+
+            _utils = new Utility(leadsDB, skillsDB, client);
+            _healthChecker = new HealthChecks(leadsDB, client);
         }
 
         public async Task<APIGatewayProxyResponse> Get(APIGatewayProxyRequest request, ILambdaContext context)
         {
+            try
+            {
+                //We know this request must be true to do an healthcheck on the system
+                if (!(JObject.Parse(request.Body).SelectToken("healthcheck") is null) && (bool)JObject.Parse(request.Body).SelectToken("healthcheck") == true)
+                {
+                    context.Logger.LogLine("Doing healthcheck");
+                    //Do healthcheck
+                    JObject health = await _healthChecker.CheckHealth();
+
+                    //Create response with the result from the healthcheck
+                    APIGatewayProxyResponse healthResponse = new APIGatewayProxyResponse
+                    {
+                        StatusCode = (int)HttpStatusCode.OK
+                    };
+
+                    Metrics.AddData(new MetricDatum
+                    {
+                        MetricName = "HealthChecks",
+                        Value = 1,
+                        Unit = StandardUnit.Count,
+                        TimestampUtc = DateTime.UtcNow,
+                        Dimensions = new List<Dimension>
+                            {
+                                new Dimension
+                                {
+                                    Name = "Error",
+                                    Value = health.SelectToken("error").ToString()
+                                },
+                            }
+                    });
+
+                    context.Logger.LogLine(health.ToString());
+                    context.Logger.LogLine("Healthcheck completed");
+
+                    await Metrics.CommitDataAsync();
+
+                    return healthResponse;
+                }
+            }
+            catch{}
             GlobalVars.CONTEXT = context;
 
             try
@@ -125,7 +175,7 @@ namespace SlackJobPosterReceiver
                     }
                 };
             }
-            
+
             await Metrics.CommitDataAsync();
 
             return response;

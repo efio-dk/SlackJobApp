@@ -137,7 +137,7 @@ namespace SlackJobPosterReceiver.API
             }
             catch
             {
-                throw new Exception("Error connecting to close");
+                throw new CloseConnectionException();
             }
             
             JObject responseJObj = await response.Content.ReadAsJsonAsync<JObject>();
