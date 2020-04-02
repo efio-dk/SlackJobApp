@@ -1,6 +1,6 @@
-variable "test_var" {
+variable "previous_commit_id" {
   type        = string
-  description = "Test var."
+  description = "Previous commit id to enable rollback."
 }
 
 
@@ -79,7 +79,6 @@ resource "aws_lambda_function" "stg-SlackJobPosterReceiver-lambda" {
   tags = {
     Name        = "stg-SlackJobPosterReceiver"
     Environment = "staging"
-    Test = var.test_var
   }
 
   environment {
@@ -180,5 +179,46 @@ resource "aws_dynamodb_table" "stg-slack-skills-table" {
   tags = {
     Name        = "stg-slack-skills-table"
     Environment = "staging"
+  }
+}
+
+
+
+resource "aws_cloudwatch_event_rule" "cloudwatch_alarm_rollback_stg" {
+  name        = "cloudwatch_alarm_rollback_stg"
+  description = "Rollback to previous commit in case an alarm changes state"
+
+  event_pattern = <<PATTERN
+{
+  "source": [
+    "aws.cloudwatch"
+  ],
+  "resources": [
+    "arn:aws:cloudwatch:eu-west-1:833191605868:alarm:HealthCheck Alarm (Staging)"
+  ],
+  "detail-type": [
+    "CloudWatch Alarm State Change"
+  ],
+  "detail": {
+    "state": [
+      "ALARM"
+    ]
+  }
+}
+PATTERN
+}
+
+resource "aws_cloudwatch_event_target" "cloudwatch_event_codebuild_stg" {
+  rule      = aws_cloudwatch_event_rule.cloudwatch_alarm_rollback_stg.name
+  arn       = "arn:aws:codebuild:eu-west-1:833191605868:project/SlackJobApp-Staging"
+  input = "{\"sourceVersion\":\"${var.previous_commit_id}\"}"
+}
+
+data "aws_iam_policy_document" "cloudwatch_codebuild_role_stg" {
+  statement {
+    effect  = "Allow"
+    actions = ["codebuild:StartBuild"]
+
+    resources = ["arn:aws:codebuild:eu-west-1:833191605868:project/SlackJobApp-Staging"]
   }
 }
