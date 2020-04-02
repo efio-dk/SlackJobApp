@@ -208,12 +208,27 @@ resource "aws_cloudwatch_event_rule" "cloudwatch_alarm_rollback_stg" {
 PATTERN
 }
 
-resource "aws_cloudwatch_event_target" "cloudwatch_event_codebuild_stg" {
-  rule      = aws_cloudwatch_event_rule.cloudwatch_alarm_rollback_stg.name
-  arn       = "arn:aws:codebuild:eu-west-1:833191605868:project/SlackJobApp-Staging"
-  input = "{\"sourceVersion\":\"${var.previous_commit_id}\"}"
-}
+resource "aws_iam_role" "cloudwatch_codebuild_role_stg" {
+  name = "cloudwatch_codebuild_role_stg"
 
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:StartBuild"
+            ],
+            "Resource": [
+                "arn:aws:codebuild:eu-west-1:833191605868:project/SlackJobApp-Staging"
+            ]
+        }
+    ]
+}
+EOF
+}
+/*
 data "aws_iam_policy_document" "cloudwatch_codebuild_role_stg" {
   statement {
     effect  = "Allow"
@@ -221,4 +236,11 @@ data "aws_iam_policy_document" "cloudwatch_codebuild_role_stg" {
 
     resources = ["arn:aws:codebuild:eu-west-1:833191605868:project/SlackJobApp-Staging"]
   }
+}*/
+
+resource "aws_cloudwatch_event_target" "cloudwatch_event_codebuild_stg" {
+  rule      = aws_cloudwatch_event_rule.cloudwatch_alarm_rollback_stg.name
+  arn       = "arn:aws:codebuild:eu-west-1:833191605868:project/SlackJobApp-Staging"
+  role_arn = aws_iam_policy_document.cloudwatch_codebuild_role_stg.arn
+  input = "{\"sourceVersion\":\"${var.previous_commit_id}\"}"
 }
