@@ -200,9 +200,12 @@ resource "aws_cloudwatch_event_rule" "cloudwatch_alarm_rollback_stg" {
     "CloudWatch Alarm State Change"
   ],
   "detail": {
-    "state": [
-      "ALARM"
-    ]
+    "state": 
+    {
+      "value": [
+                "ALARM"
+            ]
+    }
   }
 }
 PATTERN
