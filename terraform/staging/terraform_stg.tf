@@ -220,6 +220,9 @@ resource "aws_iam_role" "cloudwatch_codebuild_role_stg" {
     "Statement": [
         {
             "Effect": "Allow",
+            "Principal": {
+              "Service": "events.amazonaws.com"
+            },
             "Action": "codebuild:StartBuild"
         }
     ]
