@@ -106,7 +106,7 @@ namespace SlackJobPosterReceiver.API
         public async Task<string> GetStatusId(string statusName)
         {
             HttpResponseMessage response;
-            
+
             try
             {
                 response = await _client.GetAsJsonAsync("https://api.close.com/api/v1/status/opportunity/", GlobalVars.CLOSE_TOKEN);
@@ -128,7 +128,7 @@ namespace SlackJobPosterReceiver.API
         public async Task<JObject> GetLeads()
         {
             HttpResponseMessage response;
-            
+
             try
             {
                 response = await _client.GetAsJsonAsync("https://api.close.com/api/v1/lead/", GlobalVars.CLOSE_TOKEN);
@@ -139,7 +139,7 @@ namespace SlackJobPosterReceiver.API
             {
                 throw new CloseConnectionException();
             }
-            
+
             JObject responseJObj = await response.Content.ReadAsJsonAsync<JObject>();
 
             return responseJObj;

@@ -21,17 +21,21 @@ namespace SlackJobPosterReceiver.API
             JObject newView;
             if (responseAction)
             {
-                newView = new JObject();
-                newView.Add("response_action", "push");
-                newView.Add("view", JObject.Parse(view));
+                newView = new JObject
+                {
+                    { "response_action", "push" },
+                    { "view", JObject.Parse(view) }
+                };
             }
             else
+            {
                 newView = JObject.Parse(view);
+            }
 
             //url to open a view in Slack
             string url = "https://slack.com/api/views.open?token=" + token + "&trigger_id=" + triggerId + "&view=" + HttpUtility.UrlEncode(newView.ToString());
 
-            HttpResponseMessage responses = await _client.GetAsync(url);
+            await _client.GetAsync(url);
 
             return newView;
         }

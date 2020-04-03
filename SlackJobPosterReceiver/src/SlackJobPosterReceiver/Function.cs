@@ -44,7 +44,7 @@ namespace SlackJobPosterReceiver
             try
             {
                 //We know this request must be true to do an healthcheck on the system
-                if (!(JObject.Parse(request.Body).SelectToken("healthcheck") is null) && (bool)JObject.Parse(request.Body).SelectToken("healthcheck") == true)
+                if (!(JObject.Parse(request.Body).SelectToken("healthcheck") is null) && (bool)JObject.Parse(request.Body).SelectToken("healthcheck"))
                 {
                     context.Logger.LogLine("Doing healthcheck");
                     //Do healthcheck

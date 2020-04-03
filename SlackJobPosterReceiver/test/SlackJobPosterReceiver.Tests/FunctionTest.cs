@@ -750,7 +750,7 @@ namespace SlackJobPosterReceiver.Tests
             List<string> updatedSkills = new List<string> { "Java" };
             JObject updatedMsg = SlackHelper.BuildDefaultSlackHome("testId", updatedSkills);
 
-            string expectedUrl = "https://slack.com/api/views.publish";
+            const string expectedUrl = "https://slack.com/api/views.publish";
 
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             handlerMock
@@ -835,7 +835,7 @@ namespace SlackJobPosterReceiver.Tests
             List<string> updatedSkills = new List<string> { "C#", "Java", "testSkill" };
             JObject updatedMsg = SlackHelper.BuildDefaultSlackHome("testId", updatedSkills);
 
-            string expectedUrl = "https://slack.com/api/views.publish";
+            const string expectedUrl = "https://slack.com/api/views.publish";
 
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             handlerMock
@@ -908,11 +908,13 @@ namespace SlackJobPosterReceiver.Tests
                             }}";
 
             Mock<IDBFacade> mockedDB = new Mock<IDBFacade>();
-            Document leadFromDB = new Document();
-            leadFromDB.Add("message_text", "testMessage");
+            Document leadFromDB = new Document
+            {
+                { "message_text", "testMessage" }
+            };
             mockedDB.Setup(db => db.GetFromDB(It.IsAny<string>())).Returns(Task.FromResult(leadFromDB));
 
-            string expectedUrl = "http://testhookurl.com";
+            const string expectedUrl = "http://testhookurl.com";
 
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             handlerMock
@@ -1042,7 +1044,6 @@ namespace SlackJobPosterReceiver.Tests
 
             mockedDB.Verify(db => db.AddToDB(It.IsAny<Dictionary<string, string>>()), Times.Once());
         }
-
 
         [Fact]
         public async void UtilityAddToCloseBtnTest()
@@ -1254,7 +1255,7 @@ namespace SlackJobPosterReceiver.Tests
             List<string> updatedSkills = new List<string> { "C#", "Java" };
             JObject updatedMsg = SlackHelper.BuildDefaultSlackHome("testId", updatedSkills);
 
-            string expectedUrl = "https://slack.com/api/views.publish";
+            const string expectedUrl = "https://slack.com/api/views.publish";
 
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             handlerMock

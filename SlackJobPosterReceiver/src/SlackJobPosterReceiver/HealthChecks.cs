@@ -44,7 +44,6 @@ namespace SlackJobPosterReceiver
                 }
             }
 
-            
             returnObj.Add("messages", JToken.FromObject(errorMessages));
             returnObj.Add("error", hasError);
 
@@ -59,7 +58,7 @@ namespace SlackJobPosterReceiver
             {
                 await _dbLeads.GetAllFromDB("skill_name");
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 message += "There was a problem with connectivity to DynamoDB" + System.Environment.NewLine;
             }
@@ -77,7 +76,7 @@ namespace SlackJobPosterReceiver
                 if (response.StatusCode != HttpStatusCode.OK)
                     message = "Slack api responded with " + response.StatusCode;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 message += "There was a problem with connectivity to Slack API" + System.Environment.NewLine;
             }
@@ -93,7 +92,7 @@ namespace SlackJobPosterReceiver
             {
                 await _closeApi.GetLeads();
             }
-            catch (CloseConnectionException e)
+            catch (CloseConnectionException)
             {
                 message += typeof(CloseConnectionException) + " There was a problem with connectivity to close API";
             }

@@ -161,7 +161,7 @@ namespace SlackJobPosterReceiver
                 JObject finalCloseMsg = SlackHelper.BuildDefaultSlackPayload(msgHeader, null, SlackPostState.FINAL, lead_id);
                 await _slackApi.UpdateMessage(finalCloseMsg, hookUrl);
             }
-            catch (CloseConnectionException e)
+            catch (CloseConnectionException)
             {
                 string view = SlackHelper.GetErrorModal(":see_no_evil: :heavy_multiplication_x: There was a problem connecting to Close. Try again later.");
 
@@ -193,7 +193,7 @@ namespace SlackJobPosterReceiver
                 updatedMsg = SlackHelper.BuildDefaultSlackPayload(msgHeader, selected, SlackPostState.ACTIONS, leadId, await GetListOfCustomers());
                 await _slackApi.UpdateMessage(updatedMsg, hookUrl);
             }
-            catch (CloseConnectionException e)
+            catch (CloseConnectionException)
             {
                 string view = SlackHelper.GetErrorModal(":see_no_evil: :heavy_multiplication_x: There was a problem connecting to Close. Try again later.");
 
@@ -230,7 +230,7 @@ namespace SlackJobPosterReceiver
 
                 await _dbLeads.AddToDB(parameters);
             }
-            catch (CloseConnectionException e)
+            catch (CloseConnectionException)
             {
                 string view = SlackHelper.GetErrorModal(":see_no_evil: :heavy_multiplication_x: There was a problem connecting to Close. Try again later.");
 

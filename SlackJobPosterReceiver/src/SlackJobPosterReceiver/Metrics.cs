@@ -24,7 +24,7 @@ namespace SlackJobPosterReceiver
 
         public static async Task CommitDataAsync()
         {
-            if (_data.Count <= 0)
+            if (_data.Count == 0)
                 return;
             await _amazonCloudWatch.PutMetricDataAsync(new PutMetricDataRequest
             {
