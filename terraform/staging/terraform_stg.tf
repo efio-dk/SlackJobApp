@@ -223,7 +223,7 @@ resource "aws_iam_role" "cloudwatch_codebuild_role_stg" {
             "Principal": {
               "Service": "events.amazonaws.com"
             },
-            "Action": "codebuild:StartBuild"
+            "Action": "sts:AssumeRole"
         }
     ]
   }
