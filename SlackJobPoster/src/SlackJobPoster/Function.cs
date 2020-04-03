@@ -17,6 +17,8 @@ using SlackJobPoster.Database;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DocumentModel;
 using SlackJobPoster.API;
+using Amazon.CloudWatch.Model;
+using Amazon.CloudWatch;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -46,10 +48,27 @@ namespace SlackJobPoster
             {
                 await ProcessMessageAsync(message, skillsTable, db, context);
             }
+            await Metrics.CommitDataAsync();
         }
 
         private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, Table skillsTable, IDBFacade db, ILambdaContext context)
         {
+            Metrics.AddData(new MetricDatum
+            {
+                MetricName = "IncomingJobPosts",
+                Value = 1,
+                Unit = StandardUnit.Count,
+                TimestampUtc = DateTime.UtcNow,
+                Dimensions = new List<Dimension>
+                            {
+                                new Dimension
+                                {
+                                    Name = "IncomingJobPosts",
+                                    Value = "1"
+                                }
+                            }
+            });
+
             SecretManager sm = new SecretManager();
             _webhook_url = sm.Get("SLACK_WEBHOOK");
 
@@ -63,6 +82,21 @@ namespace SlackJobPoster
             {
                 JObject jsonObject = await BuildSlackPayload(jobPostHeader, jobPostUrl, _closeApi, jobPostCustomer);
                 await _client.PostAsJsonAsync(_webhook_url, jsonObject);
+                Metrics.AddData(new MetricDatum
+                {
+                    MetricName = "PostedJobPostsToSlack",
+                    Value = 1,
+                    Unit = StandardUnit.Count,
+                    TimestampUtc = DateTime.UtcNow,
+                    Dimensions = new List<Dimension>
+                            {
+                                new Dimension
+                                {
+                                    Name = "PostedJobPostsToSlack",
+                                    Value = "1"
+                                }
+                            }
+                });
             }
 
             await Task.CompletedTask;

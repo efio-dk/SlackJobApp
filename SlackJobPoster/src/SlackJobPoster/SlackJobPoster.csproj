@@ -9,6 +9,7 @@
     <PackageReference Include="Amazon.Lambda.Core" Version="1.1.0" />
     <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="1.7.0" />
     <PackageReference Include="Amazon.Lambda.SQSEvents" Version="1.1.0" />
+    <PackageReference Include="AWSSDK.CloudWatch" Version="3.3.106.10" />
     <PackageReference Include="AWSSDK.SecretsManager" Version="3.3.101.84" />
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.3.104.21" />
     <PackageReference Include="SlackMessage-Builder" Version="1.0.4" />

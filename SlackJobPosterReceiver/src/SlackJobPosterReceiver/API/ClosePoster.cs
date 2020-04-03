@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Amazon.CloudWatch;
+using Amazon.CloudWatch.Model;
 using Newtonsoft.Json.Linq;
 
 namespace SlackJobPosterReceiver.API
@@ -29,6 +32,22 @@ namespace SlackJobPosterReceiver.API
                 response = await _client.PostAsJsonAsync("https://api.close.com/api/v1/lead/", leadObj, GlobalVars.CLOSE_TOKEN);
                 if(response.StatusCode != HttpStatusCode.OK)
                     throw new CloseConnectionException();
+
+                Metrics.AddData(new MetricDatum
+                        {
+                            MetricName = "PostedLeads",
+                            Value = 1,
+                            Unit = StandardUnit.Count,
+                            TimestampUtc = DateTime.UtcNow,
+                            Dimensions = new List<Dimension>
+                            {
+                                new Dimension
+                                {
+                                    Name = "PostedLeads",
+                                    Value = "1"
+                                }
+                            }
+                        });
             }
             catch
             {
@@ -59,6 +78,22 @@ namespace SlackJobPosterReceiver.API
                 response = await _client.PostAsJsonAsync("https://api.close.com/api/v1/opportunity/", opportunityObj, GlobalVars.CLOSE_TOKEN);
                 if(response.StatusCode != HttpStatusCode.OK)
                     throw new CloseConnectionException();
+
+                Metrics.AddData(new MetricDatum
+                        {
+                            MetricName = "PostedJobs",
+                            Value = 1,
+                            Unit = StandardUnit.Count,
+                            TimestampUtc = DateTime.UtcNow,
+                            Dimensions = new List<Dimension>
+                            {
+                                new Dimension
+                                {
+                                    Name = "PostedJobs",
+                                    Value = "1"
+                                }
+                            }
+                        });
             }
             catch
             {
@@ -102,7 +137,7 @@ namespace SlackJobPosterReceiver.API
             }
             catch
             {
-                throw new Exception("Error connecting to close");
+                throw new CloseConnectionException();
             }
             
             JObject responseJObj = await response.Content.ReadAsJsonAsync<JObject>();
