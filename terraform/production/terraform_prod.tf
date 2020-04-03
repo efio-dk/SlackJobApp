@@ -192,7 +192,7 @@ resource "aws_cloudwatch_event_rule" "prod-RollbackAlarm-rule" {
     "aws.cloudwatch"
   ],
   "resources": [
-    "arn:aws:cloudwatch:eu-west-1:833191605868:alarm:HealthCheck Alarm (Staging)"
+    "arn:aws:cloudwatch:eu-west-1:833191605868:alarm:HealthCheck Alarm (Production)"
   ],
   "detail-type": [
     "CloudWatch Alarm State Change"
@@ -241,7 +241,7 @@ resource "aws_iam_role_policy" "prod-CloudwatchCodebuild-rolePolicy" {
           "Action": [
               "codebuild:StartBuild"
           ],
-          "Resource": "arn:aws:codebuild:eu-west-1:833191605868:project/SlackJobApp-Staging"
+          "Resource": "arn:aws:codebuild:eu-west-1:833191605868:project/SlackJobApp-Prod"
       }
     ]
   }
@@ -250,7 +250,7 @@ resource "aws_iam_role_policy" "prod-CloudwatchCodebuild-rolePolicy" {
 
 resource "aws_cloudwatch_event_target" "prod-CloudwatchEventCodebuild" {
   rule     = aws_cloudwatch_event_rule.prod-RollbackAlarm-rule.name
-  arn      = "arn:aws:codebuild:eu-west-1:833191605868:project/SlackJobApp-Staging"
+  arn      = "arn:aws:codebuild:eu-west-1:833191605868:project/SlackJobApp-Prod"
   role_arn = aws_iam_role.prod-CloudwatchCodebuild-role.arn
   input    = "{\"sourceVersion\":\"${var.previous_commit_id}\"}"
 }
