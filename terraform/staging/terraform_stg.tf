@@ -249,7 +249,7 @@ resource "aws_iam_role_policy" "stg-CloudwatchCodebuild-rolePolicy" {
   EOF
 }
 
-resource "aws_cloudwatch_event_target" "cloudwatch_event_codebuild_stg" {
+resource "aws_cloudwatch_event_target" "stg-CloudwatchEventCodebuild" {
   rule     = aws_cloudwatch_event_rule.stg-RollbackAlarm-rule.name
   arn      = "arn:aws:codebuild:eu-west-1:833191605868:project/SlackJobApp-Staging"
   role_arn = aws_iam_role.stg-CloudwatchCodebuild-role.arn
