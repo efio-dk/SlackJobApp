@@ -92,26 +92,6 @@ resource "aws_lambda_function" "stg-SlackJobPosterReceiver-lambda" {
   }
 }
 
-# Cloudwatch
-resource "aws_cloudwatch_event_rule" "stg-SlackJobPosterReceiver-rule" {
-  name                = "stg-SlackJobPosterReceiver-warmer"
-  schedule_expression = "rate(5 minutes)"
-}
-
-resource "aws_cloudwatch_event_target" "stg-SlackJobPosterReceiver-target" {
-  rule  = aws_cloudwatch_event_rule.stg-SlackJobPosterReceiver-rule.name
-  arn   = aws_lambda_function.stg-SlackJobPosterReceiver-lambda.arn
-  input = "{\"Resource\":\"WarmingLambda\",\"Body\":\"5\"}"
-}
-
-resource "aws_lambda_permission" "allow_cloudwatch_to_call_SlackJobPosterReceiver" {
-  statement_id  = "AllowExecutionFromCloudWatch"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.stg-SlackJobPosterReceiver-lambda.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.stg-SlackJobPosterReceiver-rule.arn
-}
-
 
 # API Gateway
 resource "aws_api_gateway_rest_api" "slack-app-api" {
@@ -183,9 +163,28 @@ resource "aws_dynamodb_table" "stg-slack-skills-table" {
 }
 
 
+# Cloudwatch
+resource "aws_cloudwatch_event_rule" "stg-SlackJobPosterReceiver-rule" {
+  name                = "stg-SlackJobPosterReceiver-warmer"
+  schedule_expression = "rate(5 minutes)"
+}
 
-resource "aws_cloudwatch_event_rule" "cloudwatch_alarm_rollback_stg" {
-  name        = "cloudwatch_alarm_rollback_stg"
+resource "aws_cloudwatch_event_target" "stg-SlackJobPosterReceiver-target" {
+  rule  = aws_cloudwatch_event_rule.stg-SlackJobPosterReceiver-rule.name
+  arn   = aws_lambda_function.stg-SlackJobPosterReceiver-lambda.arn
+  input = "{\"Resource\":\"WarmingLambda\",\"Body\":\"5\"}"
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_to_call_SlackJobPosterReceiver" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.stg-SlackJobPosterReceiver-lambda.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.stg-SlackJobPosterReceiver-rule.arn
+}
+
+resource "aws_cloudwatch_event_rule" "stg-RollbackAlarm-rule" {
+  name        = "stg-RollbackAlarm-rule"
   description = "Rollback to previous commit in case an alarm changes state"
 
   event_pattern = <<PATTERN
@@ -211,8 +210,8 @@ resource "aws_cloudwatch_event_rule" "cloudwatch_alarm_rollback_stg" {
 PATTERN
 }
 
-resource "aws_iam_role" "cloudwatch_codebuild_role_stg" {
-  name = "cloudwatch_codebuild_role_stg"
+resource "aws_iam_role" "stg-CloudwatchCodebuild-role" {
+  name = "stg-CloudwatchCodebuild-role"
 
   assume_role_policy = <<-EOF
   {
@@ -230,9 +229,9 @@ resource "aws_iam_role" "cloudwatch_codebuild_role_stg" {
   EOF
 }
 
-resource "aws_iam_role_policy" "cloudwatch_codebuild_role_policy_stg" {
-  name = "cloudwatch_codebuild_role_policy_stg"
-  role = aws_iam_role.cloudwatch_codebuild_role_stg.id
+resource "aws_iam_role_policy" "stg-CloudwatchCodebuild-rolePolicy" {
+  name = "stg-CloudwatchCodebuild-rolePolicy"
+  role = aws_iam_role.stg-CloudwatchCodebuild-role.id
 
   policy = <<-EOF
   {
@@ -251,8 +250,8 @@ resource "aws_iam_role_policy" "cloudwatch_codebuild_role_policy_stg" {
 }
 
 resource "aws_cloudwatch_event_target" "cloudwatch_event_codebuild_stg" {
-  rule     = aws_cloudwatch_event_rule.cloudwatch_alarm_rollback_stg.name
+  rule     = aws_cloudwatch_event_rule.stg-RollbackAlarm-rule.name
   arn      = "arn:aws:codebuild:eu-west-1:833191605868:project/SlackJobApp-Staging"
-  role_arn = aws_iam_role.cloudwatch_codebuild_role_stg.arn
+  role_arn = aws_iam_role.stg-CloudwatchCodebuild-role.arn
   input    = "{\"sourceVersion\":\"${var.previous_commit_id}\"}"
 }
