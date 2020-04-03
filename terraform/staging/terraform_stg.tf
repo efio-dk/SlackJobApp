@@ -213,9 +213,14 @@ PATTERN
 
 resource "aws_iam_role" "cloudwatch_codebuild_role_stg" {
   name = "cloudwatch_codebuild_role_stg"
+}
 
-  assume_role_policy = <<EOF
-{
+resource "aws_iam_role_policy" "cloudwatch_codebuild_role_policy_stg" {
+  name = "cloudwatch_codebuild_role_policy_stg"
+  role = aws_iam_role.cloudwatch_codebuild_role_stg.id
+
+  policy = <<-EOF
+  {
     "Version": "2012-10-17",
     "Statement": [
         {
@@ -229,7 +234,7 @@ resource "aws_iam_role" "cloudwatch_codebuild_role_stg" {
         }
     ]
 }
-EOF
+  EOF
 }
 
 resource "aws_cloudwatch_event_target" "cloudwatch_event_codebuild_stg" {
