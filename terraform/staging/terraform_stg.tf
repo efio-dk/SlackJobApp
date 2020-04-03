@@ -213,6 +213,20 @@ PATTERN
 
 resource "aws_iam_role" "cloudwatch_codebuild_role_stg" {
   name = "cloudwatch_codebuild_role_stg"
+
+  assume_role_policy = <<EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:StartBuild"
+            ]
+        }
+    ]
+  }
+  EOF
 }
 
 resource "aws_iam_role_policy" "cloudwatch_codebuild_role_policy_stg" {
